@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Search, MapPin, Home as HomeIcon, Building2 } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -26,29 +25,29 @@ const Home = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gray-50 py-16 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Find and Book the Best{' '}
-            <span className="text-patho-primary">Pathology Labs</span> Near You
+      <section className="bg-gray-50 py-12 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+            Find and Book <span className="text-patho-primary">Pathology Tests</span> Effortlessly
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-            Compare prices, read reviews, and book diagnostic tests from top-rated labs with ease
+          <p className="text-md md:text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Compare prices, read reviews, and schedule diagnostic tests from top-rated labs with confidence
           </p>
 
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="max-w-xl mx-auto bg-white rounded-lg shadow-md p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Enter your location"
-                  className="pl-10"
+                  placeholder="Enter location"
+                  className="pl-9 h-10"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 />
                 <Button
                   variant="link"
-                  className="absolute right-2 top-2 text-patho-primary"
+                  size="sm"
+                  className="absolute right-2 top-1.5 text-patho-primary text-xs"
                   onClick={detectLocation}
                 >
                   Detect
@@ -56,31 +55,22 @@ const Home = () => {
               </div>
               
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search for tests (e.g. Blood Test, CBC)"
-                  className="pl-10"
+                  placeholder="Search tests (e.g. Blood Test)"
+                  className="pl-9 h-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4 justify-between">
-              <div className="flex gap-4">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <HomeIcon className="h-4 w-4" />
-                  At Home Sample Collection
-                </Button>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Visit a Lab
-                </Button>
-              </div>
-              <Button onClick={handleSearch} className="bg-patho-primary hover:bg-patho-secondary">
-                Search Labs
-              </Button>
-            </div>
+            <Button 
+              onClick={handleSearch} 
+              className="w-full bg-patho-primary hover:bg-patho-secondary"
+            >
+              Find Labs
+            </Button>
           </div>
         </div>
       </section>
