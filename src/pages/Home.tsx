@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, HomeIcon, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -7,13 +8,15 @@ import { useNavigate } from 'react-router-dom';
 const Home = () => {
   const [location, setLocation] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sampleType, setSampleType] = useState('home'); // 'home' or 'lab'
   const navigate = useNavigate();
   
   const handleSearch = () => {
     navigate('/labs', { 
       state: { 
         location, 
-        query: searchQuery 
+        query: searchQuery,
+        sampleType
       } 
     });
   };
@@ -28,7 +31,7 @@ const Home = () => {
       <section className="bg-gray-50 py-12 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-            Find and Book <span className="text-patho-primary">Pathology Tests</span> Effortlessly
+            Find and Book the <span className="text-patho-primary">Best Pathology Labs</span> Near You
           </h1>
           <p className="text-md md:text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             Compare prices, read reviews, and schedule diagnostic tests from top-rated labs with confidence
@@ -63,6 +66,25 @@ const Home = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+            </div>
+            
+            <div className="flex gap-3 mb-3">
+              <Button 
+                variant={sampleType === 'home' ? 'default' : 'outline'} 
+                className={`flex items-center gap-2 flex-1 ${sampleType === 'home' ? 'bg-patho-primary hover:bg-patho-secondary' : ''}`}
+                onClick={() => setSampleType('home')}
+              >
+                <HomeIcon className="h-4 w-4" />
+                At Home Sample Collection
+              </Button>
+              <Button 
+                variant={sampleType === 'lab' ? 'default' : 'outline'} 
+                className={`flex items-center gap-2 flex-1 ${sampleType === 'lab' ? 'bg-patho-primary hover:bg-patho-secondary' : ''}`}
+                onClick={() => setSampleType('lab')}
+              >
+                <Building2 className="h-4 w-4" />
+                Visit a Lab
+              </Button>
             </div>
 
             <Button 
