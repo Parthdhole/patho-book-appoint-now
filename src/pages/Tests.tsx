@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
-import { Search, Filter, Clock, DropletHalf, CalendarClock } from 'lucide-react';
+import { Search, Filter, Clock, Droplet, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 
-// Mock data for tests
 const mockTests = [
   {
     id: 1,
@@ -225,7 +223,7 @@ const Tests = () => {
             
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-gray-600 text-sm">
-                <DropletHalf className="h-4 w-4 mr-2 text-patho-primary" />
+                <Droplet className="h-4 w-4 mr-2 text-patho-primary" />
                 <span>Sample: {test.sampleType}</span>
               </div>
               <div className="flex items-center text-gray-600 text-sm">
