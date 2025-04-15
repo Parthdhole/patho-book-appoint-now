@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, MapPin, Home as HomeIcon, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,6 @@ const Home = () => {
   };
 
   const detectLocation = () => {
-    // In a real app, we would use geolocation API
     setLocation('Current Location');
   };
 
@@ -89,11 +87,10 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <StatCard value="2500+" label="Labs" />
             <StatCard value="500+" label="Cities" />
             <StatCard value="1M+" label="Customers" />
-            <StatCard value="10K+" label="Tests" />
           </div>
         </div>
       </section>
@@ -215,7 +212,6 @@ const Home = () => {
   );
 };
 
-// Component for stats display
 const StatCard = ({ value, label }: { value: string; label: string }) => (
   <div>
     <p className="text-patho-primary text-3xl font-bold">{value}</p>
@@ -223,7 +219,6 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
   </div>
 );
 
-// Component for test card
 const TestCard = ({ 
   title, 
   originalPrice, 
@@ -256,7 +251,6 @@ const TestCard = ({
   </div>
 );
 
-// Component for lab card
 const LabCard = ({ 
   name, 
   address, 
@@ -311,7 +305,6 @@ const LabCard = ({
   </div>
 );
 
-// Component for how it works step
 const StepCard = ({ 
   number, 
   title, 

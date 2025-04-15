@@ -32,19 +32,18 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Company</h3>
             <ul className="space-y-2 text-gray-600">
-              <li><Link to="/" className="hover:text-patho-primary">About Us</Link></li>
-              <li><Link to="/" className="hover:text-patho-primary">Contact</Link></li>
-              <li><Link to="/" className="hover:text-patho-primary">Careers</Link></li>
-              <li><Link to="/" className="hover:text-patho-primary">Partner With Us</Link></li>
+              <li><Link to="/about" className="hover:text-patho-primary">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-patho-primary">Contact</Link></li>
+              <li><Link to="/partner" className="hover:text-patho-primary">Partner With Us</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-bold text-lg mb-4">Legal</h3>
             <ul className="space-y-2 text-gray-600">
-              <li><Link to="/" className="hover:text-patho-primary">Privacy Policy</Link></li>
-              <li><Link to="/" className="hover:text-patho-primary">Terms of Service</Link></li>
-              <li><Link to="/" className="hover:text-patho-primary">Refund Policy</Link></li>
+              <li><Link to="/privacy" className="hover:text-patho-primary">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-patho-primary">Terms of Service</Link></li>
+              <li><Link to="/refund" className="hover:text-patho-primary">Refund Policy</Link></li>
             </ul>
           </div>
         </div>

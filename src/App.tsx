@@ -12,6 +12,10 @@ import Bookings from "@/pages/Bookings";
 import BookingForm from "@/pages/BookingForm";
 import BookingConfirmation from "@/pages/BookingConfirmation";
 import NotFound from "./pages/NotFound";
+import AboutUs from "./pages/AboutUs";
+import RefundPolicy from "./pages/RefundPolicy";
+import PartnerWithUs from "./pages/PartnerWithUs";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +33,10 @@ const App = () => (
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/booking" element={<BookingForm />} />
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/refund" element={<RefundPolicy />} />
+            <Route path="/partner" element={<PartnerWithUs />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
