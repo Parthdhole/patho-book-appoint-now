@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, MapPin, Home as HomeIcon, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -80,17 +81,6 @@ const Home = () => {
                 Search Labs
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <StatCard value="2500+" label="Labs" />
-            <StatCard value="500+" label="Cities" />
-            <StatCard value="1M+" label="Customers" />
           </div>
         </div>
       </section>
@@ -211,13 +201,6 @@ const Home = () => {
     </div>
   );
 };
-
-const StatCard = ({ value, label }: { value: string; label: string }) => (
-  <div>
-    <p className="text-patho-primary text-3xl font-bold">{value}</p>
-    <p className="text-gray-600">{label}</p>
-  </div>
-);
 
 const TestCard = ({ 
   title, 

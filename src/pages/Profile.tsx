@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Clock, Calendar, FileText, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,37 +7,166 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "@/components/ui/use-toast";
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+91 9876543210',
-    gender: 'Male',
-    dob: '1990-01-15',
-    address: '123 Main St, Pune, Maharashtra 411001'
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const navigate = useNavigate();
+
+  const form = useForm({
+    defaultValues: {
+      full_name: '',
+      email: '',
+      phone: '',
+      gender: '',
+      dob: '',
+      address: ''
+    }
   });
 
-  const [formData, setFormData] = useState(profile);
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          setUser(user);
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error);
+            throw error;
+          }
+          
+          if (data) {
+            setProfile(data);
+            form.reset({
+              full_name: data.full_name || '',
+              email: user.email || '',
+              phone: data.phone || '',
+              gender: data.gender || '',
+              dob: data.dob || '',
+              address: data.address || ''
+            });
+          } else {
+            form.reset({
+              full_name: '',
+              email: user.email || '',
+              phone: '',
+              gender: '',
+              dob: '',
+              address: ''
+            });
+          }
+        } else {
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile information.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    getUser();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          navigate('/auth');
+        } else if (!session) {
+          navigate('/auth');
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleSubmit = async (formData: any) => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: formData.full_name,
+          phone: formData.phone,
+          gender: formData.gender,
+          dob: formData.dob,
+          address: formData.address,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setProfile({
+        ...profile,
+        ...formData,
+        updated_at: new Date().toISOString()
+      });
+      
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been updated successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile information.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfile(formData);
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    });
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCancel = () => {
-    setFormData(profile);
+    form.reset({
+      full_name: profile?.full_name || '',
+      email: user?.email || '',
+      phone: profile?.phone || '',
+      gender: profile?.gender || '',
+      dob: profile?.dob || '',
+      address: profile?.address || ''
+    });
     setIsEditing(false);
   };
 
@@ -85,6 +214,14 @@ const Profile = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="py-12 px-4 flex justify-center items-center min-h-[60vh]">
+        <p>Loading profile information...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -109,15 +246,24 @@ const Profile = () => {
                       <div className="h-24 w-24 rounded-full bg-patho-light flex items-center justify-center mb-4">
                         <User className="h-12 w-12 text-patho-primary" />
                       </div>
-                      <h2 className="text-xl font-semibold">{profile.name}</h2>
-                      <p className="text-gray-600 mb-6">{profile.email}</p>
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setIsEditing(true)}
-                      >
-                        <Edit2 className="h-4 w-4 mr-2" /> Edit Profile
-                      </Button>
+                      <h2 className="text-xl font-semibold">{profile?.full_name || user?.email}</h2>
+                      <p className="text-gray-600 mb-6">{user?.email}</p>
+                      <div className="flex flex-col w-full gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" /> Edit Profile
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-red-500 hover:text-red-600" 
+                          onClick={handleSignOut}
+                        >
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -141,98 +287,119 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     {isEditing ? (
-                      <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input 
-                              id="name" 
-                              name="name"
-                              value={formData.name}
-                              onChange={handleChange}
-                              required
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                              control={form.control}
+                              name="full_name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Full Name</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input 
-                              id="email" 
+                            <FormField
+                              control={form.control}
                               name="email"
-                              type="email"
-                              value={formData.email}
-                              onChange={handleChange}
-                              required
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Email Address</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} disabled />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input 
-                              id="phone" 
+                            <FormField
+                              control={form.control}
                               name="phone"
-                              value={formData.phone}
-                              onChange={handleChange}
-                              required
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Phone Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="gender">Gender</Label>
-                            <Input 
-                              id="gender" 
+                            <FormField
+                              control={form.control}
                               name="gender"
-                              value={formData.gender}
-                              onChange={handleChange}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Gender</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="dob">Date of Birth</Label>
-                            <Input 
-                              id="dob" 
+                            <FormField
+                              control={form.control}
                               name="dob"
-                              type="date"
-                              value={formData.dob}
-                              onChange={handleChange}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Date of Birth</FormLabel>
+                                  <FormControl>
+                                    <Input type="date" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
                           </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="address">Address</Label>
-                            <Input 
-                              id="address" 
-                              name="address"
-                              value={formData.address}
-                              onChange={handleChange}
-                            />
+                          <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Address</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end space-x-4 mt-6">
+                            <Button type="button" variant="outline" onClick={handleCancel}>
+                              Cancel
+                            </Button>
+                            <Button type="submit" className="bg-patho-primary hover:bg-patho-secondary">
+                              Save Changes
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex justify-end space-x-4 mt-6">
-                          <Button type="button" variant="outline" onClick={handleCancel}>
-                            Cancel
-                          </Button>
-                          <Button type="submit" className="bg-patho-primary hover:bg-patho-secondary">
-                            Save Changes
-                          </Button>
-                        </div>
-                      </form>
+                        </form>
+                      </Form>
                     ) : (
                       <div className="space-y-4">
                         <div className="flex items-start">
                           <User className="h-5 w-5 text-gray-400 mt-1 mr-3" />
                           <div>
                             <p className="text-sm text-gray-500">Full Name</p>
-                            <p className="font-medium">{profile.name}</p>
+                            <p className="font-medium">{profile?.full_name || 'Not set'}</p>
                           </div>
                         </div>
                         <div className="flex items-start">
                           <Mail className="h-5 w-5 text-gray-400 mt-1 mr-3" />
                           <div>
                             <p className="text-sm text-gray-500">Email Address</p>
-                            <p className="font-medium">{profile.email}</p>
+                            <p className="font-medium">{user?.email}</p>
                           </div>
                         </div>
                         <div className="flex items-start">
                           <Phone className="h-5 w-5 text-gray-400 mt-1 mr-3" />
                           <div>
                             <p className="text-sm text-gray-500">Phone Number</p>
-                            <p className="font-medium">{profile.phone}</p>
+                            <p className="font-medium">{profile?.phone || 'Not set'}</p>
                           </div>
                         </div>
                         <div className="flex items-start">
@@ -240,11 +407,11 @@ const Profile = () => {
                           <div>
                             <p className="text-sm text-gray-500">Date of Birth & Gender</p>
                             <p className="font-medium">
-                              {new Date(profile.dob).toLocaleDateString('en-US', {
+                              {profile?.dob ? new Date(profile.dob).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric'
-                              })} • {profile.gender}
+                              }) : 'Not set'} • {profile?.gender || 'Not set'}
                             </p>
                           </div>
                         </div>
@@ -252,7 +419,7 @@ const Profile = () => {
                           <MapPin className="h-5 w-5 text-gray-400 mt-1 mr-3" />
                           <div>
                             <p className="text-sm text-gray-500">Address</p>
-                            <p className="font-medium">{profile.address}</p>
+                            <p className="font-medium">{profile?.address || 'Not set'}</p>
                           </div>
                         </div>
                       </div>

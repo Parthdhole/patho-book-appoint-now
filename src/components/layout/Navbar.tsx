@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, User, LogIn, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,11 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -23,16 +27,39 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleLogin = (method: string) => {
-    console.log(`Logging in with ${method}`);
-    setIsLoggedIn(true);
-    // In a real app, this would handle actual authentication
-  };
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsLoggedIn(!!user);
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleLogout = () => {
-    console.log('Logging out');
-    setIsLoggedIn(false);
-    // In a real app, this would handle actual logout
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsLoggedIn(!!session?.user);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
@@ -67,42 +94,32 @@ const Navbar = () => {
             <Search className="h-5 w-5" />
           </Button>
           
-          {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <User className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500"></span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">My Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/bookings" className="cursor-pointer">My Bookings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <LogIn className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleLogin('google')} className="cursor-pointer">
-                  Login with Google
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleLogin('guest')} className="cursor-pointer">
-                  Continue as Guest
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {!loading && (
+            isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <User className="h-5 w-5" />
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500"></span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">My Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/bookings" className="cursor-pointer">My Bookings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" onClick={() => navigate('/auth')}>
+                <LogIn className="h-5 w-5" />
+              </Button>
+            )
           )}
         </div>
       </div>
@@ -115,16 +132,15 @@ const Navbar = () => {
             <Link to="/tests" className="px-4 py-2 hover:bg-gray-100" onClick={toggleMenu}>Tests</Link>
             <Link to="/bookings" className="px-4 py-2 hover:bg-gray-100" onClick={toggleMenu}>My Bookings</Link>
             
-            {isLoggedIn ? (
-              <>
-                <Link to="/profile" className="px-4 py-2 hover:bg-gray-100" onClick={toggleMenu}>My Profile</Link>
-                <button onClick={handleLogout} className="px-4 py-2 text-left hover:bg-gray-100">Logout</button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => handleLogin('google')} className="px-4 py-2 text-left hover:bg-gray-100">Login with Google</button>
-                <button onClick={() => handleLogin('guest')} className="px-4 py-2 text-left hover:bg-gray-100">Continue as Guest</button>
-              </>
+            {!loading && (
+              isLoggedIn ? (
+                <>
+                  <Link to="/profile" className="px-4 py-2 hover:bg-gray-100" onClick={toggleMenu}>My Profile</Link>
+                  <button onClick={handleLogout} className="px-4 py-2 text-left hover:bg-gray-100">Logout</button>
+                </>
+              ) : (
+                <Link to="/auth" className="px-4 py-2 hover:bg-gray-100" onClick={toggleMenu}>Login / Sign Up</Link>
+              )
             )}
           </div>
         </div>
