@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookingFormData } from '@/types/booking';
+import { BookingFormData, Booking } from '@/types/booking';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+
+// The table is now named `bookings` in supabase, so we'll reference that in all API calls!
 
 export const useBooking = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,10 +14,10 @@ export const useBooking = () => {
 
   const createBooking = async (bookingData: BookingFormData) => {
     setIsLoading(true);
-    
+
     try {
       const { data: session } = await supabase.auth.getSession();
-      
+
       if (!session.session?.user) {
         toast({
           title: "Authentication required",
@@ -25,30 +27,47 @@ export const useBooking = () => {
         navigate('/auth', { state: { returnTo: '/booking' } });
         return null;
       }
-      
+
       const userId = session.session.user.id;
-      
+
+      // Convert Date to ISO string for db
+      const appointmentDate = (bookingData.appointmentDate instanceof Date)
+        ? bookingData.appointmentDate.toISOString()
+        : bookingData.appointmentDate;
+
       const { data, error } = await supabase
         .from('bookings')
-        .insert([
-          { 
-            ...bookingData,
-            userId,
-            createdAt: new Date().toISOString()
-          }
-        ])
+        .insert([{
+          user_id: userId,
+          test_id: bookingData.testId,
+          test_name: bookingData.testName,
+          lab_id: bookingData.labId ?? null,
+          lab_name: bookingData.labName ?? null,
+          appointment_date: appointmentDate,
+          appointment_time: bookingData.appointmentTime,
+          patient_name: bookingData.patientName,
+          patient_age: bookingData.patientAge,
+          patient_gender: bookingData.patientGender,
+          patient_phone: bookingData.patientPhone,
+          patient_email: bookingData.patientEmail,
+          sample_type: bookingData.sampleType,
+          address: bookingData.address ?? null,
+          status: bookingData.status,
+          payment_status: bookingData.paymentStatus,
+          created_at: new Date().toISOString(),
+        }])
         .select()
-        .single();
-      
+        .maybeSingle();
+
       if (error) {
         throw error;
       }
-      
+
       toast({
         title: "Booking Successful",
         description: "Your appointment has been booked successfully",
       });
-      
+
       return data;
     } catch (error) {
       console.error('Error creating booking:', error);
@@ -63,28 +82,28 @@ export const useBooking = () => {
     }
   };
 
-  const getUserBookings = async () => {
+  const getUserBookings = async (): Promise<Booking[]> => {
     setIsLoading(true);
-    
+
     try {
       const { data: session } = await supabase.auth.getSession();
-      
+
       if (!session.session?.user) {
         return [];
       }
-      
+
       const userId = session.session.user.id;
-      
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('userId', userId)
-        .order('createdAt', { ascending: false });
-      
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
       if (error) {
         throw error;
       }
-      
+
       return data || [];
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -98,6 +117,8 @@ export const useBooking = () => {
       setIsLoading(false);
     }
   };
+
+  // [Optionally:] Add support for real-time updates later if needed!
 
   return {
     createBooking,
