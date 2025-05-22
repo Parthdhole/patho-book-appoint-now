@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, User, LogIn, Menu, X } from 'lucide-react';
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from '@/integrations/supabase/client';
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const Navbar = () => {
   const location = useLocation();
@@ -26,6 +26,8 @@ const Navbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const { isAdmin, loading: adminLoading } = useAdminRole();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -104,6 +106,13 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {isAdmin && !adminLoading && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="cursor-pointer text-blue-600 font-medium">
+                        Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">My Profile</Link>
                   </DropdownMenuItem>
