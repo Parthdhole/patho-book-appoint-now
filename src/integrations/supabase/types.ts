@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          address: string | null
+          appointment_date: string
+          appointment_time: string
+          created_at: string
+          id: string
+          lab_id: number | null
+          lab_name: string | null
+          patient_age: number
+          patient_email: string
+          patient_gender: string
+          patient_name: string
+          patient_phone: string
+          payment_status: string
+          sample_type: string
+          status: string
+          test_id: number
+          test_name: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          appointment_date: string
+          appointment_time: string
+          created_at?: string
+          id?: string
+          lab_id?: number | null
+          lab_name?: string | null
+          patient_age: number
+          patient_email: string
+          patient_gender: string
+          patient_name: string
+          patient_phone: string
+          payment_status?: string
+          sample_type: string
+          status?: string
+          test_id: number
+          test_name: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          appointment_date?: string
+          appointment_time?: string
+          created_at?: string
+          id?: string
+          lab_id?: number | null
+          lab_name?: string | null
+          patient_age?: number
+          patient_email?: string
+          patient_gender?: string
+          patient_name?: string
+          patient_phone?: string
+          payment_status?: string
+          sample_type?: string
+          status?: string
+          test_id?: number
+          test_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -74,6 +137,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      realtime_add_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

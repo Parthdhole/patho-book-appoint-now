@@ -35,6 +35,7 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
+      // Insert booking
       const { data, error } = await supabase
         .from('bookings')
         .insert([{
@@ -59,16 +60,14 @@ export const useBooking = () => {
         .select()
         .maybeSingle();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Booking Successful",
         description: "Your appointment has been booked successfully",
       });
 
-      return data;
+      return data ? data : null;
     } catch (error) {
       console.error('Error creating booking:', error);
       toast({
@@ -88,9 +87,7 @@ export const useBooking = () => {
     try {
       const { data: session } = await supabase.auth.getSession();
 
-      if (!session.session?.user) {
-        return [];
-      }
+      if (!session.session?.user) return [];
 
       const userId = session.session.user.id;
 
@@ -100,11 +97,9 @@ export const useBooking = () => {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      return data || [];
+      return data as Booking[] || [];
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -118,7 +113,7 @@ export const useBooking = () => {
     }
   };
 
-  // [Optionally:] Add support for real-time updates later if needed!
+  // You can add real-time support using the custom hook below!
 
   return {
     createBooking,
