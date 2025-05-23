@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, FileText, Calendar, MoreHorizontal, Download, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for bookings
 const mockBookings = [
@@ -57,46 +58,76 @@ const mockBookings = [
 const Bookings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
-  
-  const upcomingBookings = mockBookings.filter(booking => 
-    booking.status === 'Confirmed' || booking.status === 'Pending'
+
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
+  const { bookings, loading } = useRealtimeBookings(userId ?? undefined);
+
+  // Transform booking to table row
+  const tableBookings = !loading ? (bookings ?? []).map((b) => ({
+    id: b.id,
+    testName: b.testName ?? b.test_name,
+    labName: b.labName ?? b.lab_name ?? "-",
+    date: b.appointmentDate
+      ? new Date(b.appointmentDate).toLocaleDateString()
+      : "-",
+    time: b.appointmentTime ?? b.appointment_time ?? "-",
+    status:
+      b.status === "pending"
+        ? "Pending"
+        : b.status === "confirmed"
+        ? "Confirmed"
+        : b.status === "completed"
+        ? "Completed"
+        : b.status === "cancelled"
+        ? "Cancelled"
+        : b.status,
+    price: b.price ?? "₹0",
+    reportUrl: b.reportUrl ?? null,
+  })) : [];
+
+  const upcomingBookings = tableBookings.filter(
+    (booking) => booking.status === 'Confirmed' || booking.status === 'Pending'
   );
-  
-  const pastBookings = mockBookings.filter(booking => 
-    booking.status === 'Completed' || booking.status === 'Cancelled'
+  const pastBookings = tableBookings.filter(
+    (booking) => booking.status === 'Completed' || booking.status === 'Cancelled'
   );
-  
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  
+
   const filteredUpcomingBookings = upcomingBookings.filter(booking => 
     booking.testName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     booking.labName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     booking.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   const filteredPastBookings = pastBookings.filter(booking => 
     booking.testName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     booking.labName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     booking.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   const handleViewBooking = (bookingId: string) => {
     // In a real app, this would navigate to a booking details page
     console.log(`Viewing booking: ${bookingId}`);
   };
-  
+
   const handleDownloadInvoice = (bookingId: string) => {
     // In a real app, this would download a PDF invoice
     toast.success("Invoice downloaded successfully!");
   };
-  
+
   const handleCancelBooking = (bookingId: string) => {
     // In a real app, this would make an API call to cancel the booking
     toast.success("Booking cancelled successfully!");
   };
-  
+
   const handleRescheduleBooking = (bookingId: string) => {
     // In a real app, this would navigate to a rescheduling page
     console.log(`Rescheduling booking: ${bookingId}`);

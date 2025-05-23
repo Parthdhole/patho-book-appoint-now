@@ -101,7 +101,7 @@ const Home = () => {
       <section className="py-12 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-8">Popular Diagnostic Tests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4">
             <TestCard 
               title="Complete Blood Count (CBC)"
               originalPrice="₹499"
@@ -136,11 +136,11 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Popular Labs Section */}
+      {/* Popular Labs Section with horizontal scrolling */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-8">Top Rated Pathology Labs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4">
             <LabCard 
               name="MediLab Advanced Testing"
               address="Aundh, Pune, Maharashtra 411017"
