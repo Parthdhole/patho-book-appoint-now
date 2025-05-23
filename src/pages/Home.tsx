@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Search, MapPin, HomeIcon, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import { Card } from "@/components/ui/card";
 
 const Home = () => {
   const [location, setLocation] = useState('');
@@ -101,7 +101,7 @@ const Home = () => {
       <section className="py-12 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-8">Popular Diagnostic Tests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4">
             <TestCard 
               title="Complete Blood Count (CBC)"
               originalPrice="₹499"
@@ -136,11 +136,11 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Popular Labs Section */}
+      {/* Popular Labs Section with horizontal scrolling */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-8">Top Rated Pathology Labs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4">
             <LabCard 
               name="MediLab Advanced Testing"
               address="Aundh, Pune, Maharashtra 411017"
@@ -246,58 +246,63 @@ const TestCard = ({
   </div>
 );
 
-const LabCard = ({ 
-  name, 
-  address, 
+const LabCard = ({
+  name,
+  address,
   distance,
   rating,
   reviews,
-  badges
-}: { 
-  name: string; 
+  badges,
+}: {
+  name: string;
   address: string;
   distance: string;
   rating: string;
   reviews: string;
   badges: string[];
 }) => (
-  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-    <h3 className="text-xl font-semibold mb-2">{name}</h3>
-    <div className="flex items-start gap-2 mb-3">
-      <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-      <p className="text-gray-600 text-sm">{address} • {distance}</p>
+  <Card className="p-0 overflow-hidden shadow-md hover:shadow-lg border-2 border-blue-100 transition-all">
+    <div className="bg-yellow-400 px-6 py-3">
+      <h3 className="text-xl font-bold text-gray-900 uppercase">{name}</h3>
     </div>
-    
-    <div className="flex items-center mb-4">
-      <div className="flex items-center text-yellow-400 mr-2">
-        <svg className="w-4 h-4 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 20">
+    <div className="p-6">
+      <div className="flex items-center gap-2 mb-2">
+        <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 22 20">
           <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z"/>
         </svg>
-        <span className="font-bold">{rating}</span>
+        <span className="font-semibold text-lg">{rating}</span>
+        <span className="text-gray-500 text-sm pl-1">({reviews} reviews)</span>
       </div>
-      <span className="text-gray-500 text-sm">({reviews})</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="block text-gray-700 text-sm">{address}</span>
+        <span className="ml-auto block text-patho-primary font-semibold text-xs">{distance} away</span>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4 mt-2">
+        {badges.map((badge, idx) => (
+          <span
+            key={idx}
+            className={`px-3 py-1 rounded-full text-xs font-bold ${
+              badge.includes("NABL")
+                ? "bg-blue-100 text-blue-900"
+                : badge.includes("ISO")
+                ? "bg-purple-100 text-purple-900"
+                : "bg-green-100 text-green-900"
+            }`}
+          >
+            {badge}
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-2 pt-2">
+        <Button variant="outline" className="flex-1 border-blue-400 text-blue-700 font-semibold hover:bg-blue-100">
+          View Lab
+        </Button>
+        <Button className="flex-1 bg-yellow-400 text-gray-900 font-bold hover:bg-yellow-300">
+          Book Now
+        </Button>
+      </div>
     </div>
-    
-    <div className="flex flex-wrap gap-2 mb-4">
-      {badges.map((badge, index) => (
-        <span 
-          key={index} 
-          className={`text-xs font-medium px-2.5 py-0.5 rounded ${
-            badge.includes("NABL") ? "bg-blue-100 text-blue-800" : 
-            badge.includes("ISO") ? "bg-purple-100 text-purple-800" : 
-            "bg-green-100 text-green-800"
-          }`}
-        >
-          {badge}
-        </span>
-      ))}
-    </div>
-    
-    <div className="flex space-x-2">
-      <Button variant="outline" className="flex-1">View Details</Button>
-      <Button className="flex-1 bg-patho-primary hover:bg-patho-secondary">Book Now</Button>
-    </div>
-  </div>
+  </Card>
 );
 
 const StepCard = ({ 
