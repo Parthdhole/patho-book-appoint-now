@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingFormData, Booking } from '@/types/booking';
@@ -6,6 +5,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 // The table is now named `bookings` in supabase, so we'll reference that in all API calls!
+
+// Add a utility to map supabase booking row to app Booking type
+function mapBookingRow(row: any): Booking {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    testId: row.test_id,
+    testName: row.test_name,
+    labId: row.lab_id ?? undefined,
+    labName: row.lab_name ?? undefined,
+    appointmentDate: new Date(row.appointment_date),
+    appointmentTime: row.appointment_time,
+    patientName: row.patient_name,
+    patientAge: row.patient_age,
+    patientGender: row.patient_gender,
+    patientPhone: row.patient_phone,
+    patientEmail: row.patient_email,
+    sampleType: row.sample_type,
+    address: row.address ?? undefined,
+    status: row.status,
+    paymentStatus: row.payment_status,
+    createdAt: new Date(row.created_at),
+  }
+}
 
 export const useBooking = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +109,6 @@ export const useBooking = () => {
 
     try {
       const { data: session } = await supabase.auth.getSession();
-
       if (!session.session?.user) return [];
 
       const userId = session.session.user.id;
@@ -98,8 +120,7 @@ export const useBooking = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      return data as Booking[] || [];
+      return (data as any[]).map(mapBookingRow) || [];
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
