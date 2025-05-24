@@ -67,28 +67,30 @@ const Bookings = () => {
   }, []);
   const { bookings, loading } = useRealtimeBookings(userId ?? undefined);
 
-  // Transform booking to table row
-  const tableBookings = !loading ? (bookings ?? []).map((b) => ({
-    id: b.id,
-    testName: b.testName ?? b.test_name,
-    labName: b.labName ?? b.lab_name ?? "-",
-    date: b.appointmentDate
-      ? new Date(b.appointmentDate).toLocaleDateString()
-      : "-",
-    time: b.appointmentTime ?? b.appointment_time ?? "-",
-    status:
-      b.status === "pending"
-        ? "Pending"
-        : b.status === "confirmed"
-        ? "Confirmed"
-        : b.status === "completed"
-        ? "Completed"
-        : b.status === "cancelled"
-        ? "Cancelled"
-        : b.status,
-    price: b.price ?? "₹0",
-    reportUrl: b.reportUrl ?? null,
-  })) : [];
+  // Fix attribute names to match Booking interface (camelCase)
+  const tableBookings = !loading
+    ? (bookings ?? []).map((b) => ({
+        id: b.id,
+        testName: b.testName ?? b.test_name,
+        labName: b.labName ?? b.lab_name ?? "-",
+        date: b.appointmentDate
+          ? new Date(b.appointmentDate).toLocaleDateString()
+          : "-",
+        time: b.appointmentTime ?? b.appointment_time ?? "-",
+        status:
+          b.status === "pending"
+            ? "Pending"
+            : b.status === "confirmed"
+            ? "Confirmed"
+            : b.status === "completed"
+            ? "Completed"
+            : b.status === "cancelled"
+            ? "Cancelled"
+            : b.status,
+        price: b.price ?? "₹0",
+        reportUrl: b.reportUrl ?? null,
+      }))
+    : [];
 
   const upcomingBookings = tableBookings.filter(
     (booking) => booking.status === 'Confirmed' || booking.status === 'Pending'

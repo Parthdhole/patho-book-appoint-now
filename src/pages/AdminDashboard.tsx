@@ -2,8 +2,9 @@
 import React from "react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminCardStats from "@/components/admin/AdminCardStats";
+import PartnerApplications from "@/components/admin/PartnerApplications";
+import BookingsTableAdmin from "@/components/admin/BookingsTableAdmin";
 
 export default function AdminDashboard() {
   const { isAdmin, loading } = useAdminRole();
@@ -22,26 +23,19 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-12">
-      <Card>
-        <CardHeader>
-          <CardTitle>Admin Dashboard</CardTitle>
-          <CardDescription>Manage labs, tests, and bookings</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <Button className="w-full" onClick={() => navigate("/admin/tests")}>
-              View Tests
-            </Button>
-            <Button className="w-full" onClick={() => navigate("/admin/labs")}>
-              View Labs
-            </Button>
-            <Button className="w-full" onClick={() => navigate("/admin/bookings")}>
-              View Bookings
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="max-w-5xl mx-auto mt-8 pb-16 px-4">
+      <h1 className="text-3xl font-bold mb-3">Admin Dashboard</h1>
+      <AdminCardStats />
+      <div className="grid md:grid-cols-2 gap-8 mt-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Partner Applications</h2>
+          <PartnerApplications />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Recent Bookings</h2>
+          <BookingsTableAdmin />
+        </div>
+      </div>
     </div>
   );
 }
