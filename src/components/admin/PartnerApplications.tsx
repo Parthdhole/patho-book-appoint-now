@@ -31,11 +31,25 @@ const PartnerApplications = () => {
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setApplications((data as PartnerApplication[]) || []);
+        // Filter out rows that do not match the expected shape
+        setApplications(
+          (data as PartnerApplication[] | null)?.filter((row): row is PartnerApplication =>
+            !!row &&
+            typeof row.id === "string" &&
+            typeof row.lab_name === "string" &&
+            typeof row.owner_name === "string" &&
+            typeof row.email === "string" &&
+            typeof row.phone === "string" &&
+            typeof row.address === "string" &&
+            typeof row.city === "string" &&
+            typeof row.status === "string" &&
+            typeof row.created_at === "string"
+          ) ?? []
+        );
         setLoading(false);
       });
 
-    // Real-time subscription
+    // Real-time subscription — fix for async cleanup
     const channel = supabase
       .channel("partner-apps-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "partner_applications" }, (payload) => {
