@@ -17,6 +17,7 @@ interface PartnerApplication {
   message?: string;
   status: string;
   created_at: string;
+  updated_at?: string;
 }
 
 const PartnerApplications = () => {
@@ -30,7 +31,7 @@ const PartnerApplications = () => {
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setApplications(data || []);
+        setApplications((data as PartnerApplication[]) || []);
         setLoading(false);
       });
 
@@ -39,17 +40,19 @@ const PartnerApplications = () => {
       .channel("partner-apps-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "partner_applications" }, (payload) => {
         setApplications((prev) => {
-          let arr = [...prev];
+          let arr: PartnerApplication[] = [...prev];
           if (payload.eventType === "INSERT") arr = [payload.new as PartnerApplication, ...arr];
           else if (payload.eventType === "UPDATE")
-            arr = arr.map((a) => (a.id === payload.new.id ? payload.new : a));
+            arr = arr.map((a) => (a.id === payload.new.id ? payload.new as PartnerApplication : a));
           else if (payload.eventType === "DELETE")
             arr = arr.filter((a) => a.id !== payload.old.id);
           return arr;
         });
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, Calendar, MoreHorizontal, Download, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -68,15 +69,15 @@ const Bookings = () => {
   const { bookings, loading } = useRealtimeBookings(userId ?? undefined);
 
   // Fix attribute names to match Booking interface (camelCase)
-  const tableBookings = !loading
-    ? (bookings ?? []).map((b) => ({
+  const tableBookings = !loading && bookings
+    ? bookings.map((b) => ({
         id: b.id,
-        testName: b.testName ?? b.test_name,
-        labName: b.labName ?? b.lab_name ?? "-",
+        testName: b.testName,
+        labName: b.labName ?? "-",
         date: b.appointmentDate
           ? new Date(b.appointmentDate).toLocaleDateString()
           : "-",
-        time: b.appointmentTime ?? b.appointment_time ?? "-",
+        time: b.appointmentTime ?? "-",
         status:
           b.status === "pending"
             ? "Pending"
@@ -87,8 +88,8 @@ const Bookings = () => {
             : b.status === "cancelled"
             ? "Cancelled"
             : b.status,
-        price: b.price ?? "₹0",
-        reportUrl: b.reportUrl ?? null,
+        price: typeof (b as any).price !== "undefined" ? (b as any).price : "₹0",
+        reportUrl: typeof (b as any).reportUrl !== "undefined" ? (b as any).reportUrl : null,
       }))
     : [];
 

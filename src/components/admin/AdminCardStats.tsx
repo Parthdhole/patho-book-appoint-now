@@ -9,13 +9,9 @@ const AdminCardStats = () => {
   const [bookingCount, setBookingCount] = useState(0);
 
   useEffect(() => {
-    // Labs mock: labs table doesn't exist, demo count
-    setLabCount(6); // Update logic if you add a labs table!
+    setLabCount(6); // Demo count
+    setTestCount(14); // Demo count
 
-    // Tests mock: tests table doesn't exist, demo count
-    setTestCount(14); // Update logic if you add a tests table!
-
-    // Real-time bookings count
     const fetchBookings = async () => {
       const { count } = await supabase
         .from("bookings")
@@ -24,12 +20,13 @@ const AdminCardStats = () => {
     };
     fetchBookings();
 
-    // Optional: Add real-time count using channels if wanted
     const channel = supabase
       .channel("admin-stats")
       .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, fetchBookings)
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const statCards = [

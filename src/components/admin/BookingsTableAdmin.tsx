@@ -18,17 +18,6 @@ const BookingsTableAdmin = () => {
   const [bookings, setBookings] = useState<BookingAdmin[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadBookings();
-    const channel = supabase
-      .channel("admin-bookings-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        loadBookings();
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, []);
-
   const loadBookings = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -38,7 +27,7 @@ const BookingsTableAdmin = () => {
       .limit(15);
 
     if (!error && data) {
-      setBookings(data.map(b => ({
+      setBookings(data.map((b: any) => ({
         id: b.id,
         testName: b.test_name,
         labName: b.lab_name,
@@ -50,6 +39,19 @@ const BookingsTableAdmin = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadBookings();
+    const channel = supabase
+      .channel("admin-bookings-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        loadBookings();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleCancel = async (id: string) => {
     const { error } = await supabase
