@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
+// The project does not have partner_applications table in Supabase types,
+// so use a safe casting approach and guard the fetch against errors.
 interface PartnerApplication {
   id: string;
   lab_name: string;
@@ -26,30 +28,34 @@ const PartnerApplications = () => {
 
   useEffect(() => {
     setLoading(true);
+    // We suppress TS errors because partner_applications is not in the supabase types
     supabase
-      .from("partner_applications")
+      .from("partner_applications" as any)
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        // Filter out rows that do not match the expected shape
-        setApplications(
-          (data as PartnerApplication[] | null)?.filter((row): row is PartnerApplication =>
-            !!row &&
-            typeof row.id === "string" &&
-            typeof row.lab_name === "string" &&
-            typeof row.owner_name === "string" &&
-            typeof row.email === "string" &&
-            typeof row.phone === "string" &&
-            typeof row.address === "string" &&
-            typeof row.city === "string" &&
-            typeof row.status === "string" &&
-            typeof row.created_at === "string"
-          ) ?? []
-        );
+        if (Array.isArray(data)) {
+          setApplications(
+            data.filter(row =>
+              row &&
+              typeof row.id === "string" &&
+              typeof row.lab_name === "string" &&
+              typeof row.owner_name === "string" &&
+              typeof row.email === "string" &&
+              typeof row.phone === "string" &&
+              typeof row.address === "string" &&
+              typeof row.city === "string" &&
+              typeof row.status === "string" &&
+              typeof row.created_at === "string"
+            ) as PartnerApplication[]
+          );
+        } else {
+          setApplications([]);
+        }
         setLoading(false);
       });
 
-    // Real-time subscription — fix for async cleanup
+    // Real-time subscription — fix for async cleanup and ensure correct table
     const channel = supabase
       .channel("partner-apps-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "partner_applications" }, (payload) => {
@@ -71,7 +77,7 @@ const PartnerApplications = () => {
 
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
     const { error } = await supabase
-      .from("partner_applications")
+      .from("partner_applications" as any)
       .update({ status })
       .eq("id", id);
     if (!error) {
