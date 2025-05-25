@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Filter, Clock, Droplet, CalendarClock } from 'lucide-react';
+import { Search, Filter, Clock, Droplet, CalendarClock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const mockTests = [
   {
@@ -103,15 +104,50 @@ const mockTests = [
   }
 ];
 
+// Mock labs for selection
+const mockLabs = [
+  {
+    id: 101,
+    name: "City Lab Diagnostics",
+    address: "123 Main Street, Mumbai",
+    phone: "9000000001",
+    rating: 4.5,
+    timings: "Mon-Sat: 8am-8pm",
+    description: "NABL Accredited Lab with 20+ years experience.",
+  },
+  {
+    id: 102,
+    name: "Health First Labs",
+    address: "456 Park Avenue, Pune",
+    phone: "9000000002",
+    rating: 4.1,
+    timings: "Mon-Sun: 7am-7pm",
+    description: "Modern diagnostic facilities.",
+  },
+  {
+    id: 103,
+    name: "Apollo Diagnostic Centre",
+    address: "789 High Road, Delhi",
+    phone: "9000000003",
+    rating: 4.8,
+    timings: "Mon-Fri: 8am-8pm, Sat: 8am-4pm",
+    description: "Trusted for accuracy & reliability.",
+  },
+];
+
 const Tests = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Tests');
   const [sortBy, setSortBy] = useState('popular');
   const [filteredTests, setFilteredTests] = useState(mockTests);
-  
+
+  // For Select Lab dialog
+  const [labSelectOpen, setLabSelectOpen] = useState(false);
+  const [selectedTestForLab, setSelectedTestForLab] = useState(null);
+
   const categories = ['All Tests', 'Blood Tests', 'Hormone Tests', 'Vitamin Tests', 'Diabetes Tests', 'Organ Function Tests', 'Infection Tests'];
-  
+
   const handleSearch = () => {
     const filtered = mockTests.filter(test => 
       test.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -119,7 +155,7 @@ const Tests = () => {
     );
     setFilteredTests(filtered);
   };
-  
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     if (category === 'All Tests') {
@@ -129,9 +165,12 @@ const Tests = () => {
       setFilteredTests(filtered);
     }
   };
-  
-  const handleBookTest = (testId: number) => {
-    navigate('/booking', { state: { testId } });
+
+  // On "Book Now", immediately navigate to the booking form for first (default) lab
+  const handleBookNow = (test: any) => {
+    // Pick the first lab by default for simplicity—user can edit lab choice in the booking flow if needed
+    const defaultLab = mockLabs[0];
+    navigate('/booking', { state: { testId: test.id, labId: defaultLab.id } });
   };
 
   return (
@@ -245,7 +284,7 @@ const Tests = () => {
             
             <Button 
               className="w-full bg-patho-primary hover:bg-patho-secondary"
-              onClick={() => handleBookTest(test.id)}
+              onClick={() => handleBookNow(test)}
             >
               Book Now
             </Button>

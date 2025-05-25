@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, Calendar, MoreHorizontal, Download, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,28 +68,30 @@ const Bookings = () => {
   }, []);
   const { bookings, loading } = useRealtimeBookings(userId ?? undefined);
 
-  // Transform booking to table row
-  const tableBookings = !loading ? (bookings ?? []).map((b) => ({
-    id: b.id,
-    testName: b.testName ?? b.test_name,
-    labName: b.labName ?? b.lab_name ?? "-",
-    date: b.appointmentDate
-      ? new Date(b.appointmentDate).toLocaleDateString()
-      : "-",
-    time: b.appointmentTime ?? b.appointment_time ?? "-",
-    status:
-      b.status === "pending"
-        ? "Pending"
-        : b.status === "confirmed"
-        ? "Confirmed"
-        : b.status === "completed"
-        ? "Completed"
-        : b.status === "cancelled"
-        ? "Cancelled"
-        : b.status,
-    price: b.price ?? "₹0",
-    reportUrl: b.reportUrl ?? null,
-  })) : [];
+  // Fix attribute names to match Booking interface (camelCase)
+  const tableBookings = !loading && bookings
+    ? bookings.map((b) => ({
+        id: b.id,
+        testName: b.testName,
+        labName: b.labName ?? "-",
+        date: b.appointmentDate
+          ? new Date(b.appointmentDate).toLocaleDateString()
+          : "-",
+        time: b.appointmentTime ?? "-",
+        status:
+          b.status === "pending"
+            ? "Pending"
+            : b.status === "confirmed"
+            ? "Confirmed"
+            : b.status === "completed"
+            ? "Completed"
+            : b.status === "cancelled"
+            ? "Cancelled"
+            : b.status,
+        price: typeof (b as any).price !== "undefined" ? (b as any).price : "₹0",
+        reportUrl: typeof (b as any).reportUrl !== "undefined" ? (b as any).reportUrl : null,
+      }))
+    : [];
 
   const upcomingBookings = tableBookings.filter(
     (booking) => booking.status === 'Confirmed' || booking.status === 'Pending'

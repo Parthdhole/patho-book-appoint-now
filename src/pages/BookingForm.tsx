@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -10,10 +9,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, HomeIcon, Building2, Clock } from 'lucide-react';
+import { CalendarIcon, HomeIcon, Building2, Clock, CreditCard, IndianRupee } from 'lucide-react';
 import { useBooking } from '@/hooks/useBooking';
 import { mockTests } from '@/data/mockData';
 import { BookingFormData } from '@/types/booking';
+
+const paymentOptions = [
+  { value: 'pay_at_lab', label: 'Pay at Lab' },
+  { value: 'pay_now_upi', label: 'Pay Now (UPI)' },
+  { value: 'pay_now_card', label: 'Pay Now (Card)' },
+];
 
 const BookingForm = () => {
   const location = useLocation();
@@ -23,7 +28,23 @@ const BookingForm = () => {
   const [sampleType, setSampleType] = useState<'home' | 'lab'>(
     (location.state?.sampleType as 'home' | 'lab') || 'home'
   );
-  
+
+  // NEW: Payment method state
+  const [paymentMethod, setPaymentMethod] = useState<string>('pay_at_lab');
+
+  // NEW: Get selected lab info (from navigation state)
+  const selectedLab = location.state?.labId
+    ? {
+        labId: location.state.labId,
+        labName: location.state.labName,
+        labAddress: location.state.labAddress,
+        labPhone: location.state.labPhone,
+        labRating: location.state.labRating,
+        labDescription: location.state.labDescription,
+        labTimings: location.state.labTimings,
+      }
+    : null;
+
   const [testId, setTestId] = useState<number | null>(
     location.state?.testId || null
   );
@@ -65,6 +86,9 @@ const BookingForm = () => {
     const bookingData: BookingFormData = {
       testId,
       testName: selectedTest.name,
+      // NEW: Include selected lab data if present
+      labId: selectedLab?.labId,
+      labName: selectedLab?.labName,
       appointmentDate: selectedDate,
       appointmentTime: formData.appointmentTime,
       patientName: formData.patientName,
@@ -75,14 +99,15 @@ const BookingForm = () => {
       sampleType,
       address: sampleType === 'home' ? formData.address : undefined,
       status: 'pending',
-      paymentStatus: 'pending',
+      paymentStatus: paymentMethod === 'pay_at_lab' ? 'pending' : 'paid',
       createdAt: new Date()
     };
     
     const result = await createBooking(bookingData);
     
     if (result) {
-      navigate('/booking-confirmation', { state: { bookingId: result.id } });
+      // Pass payment info for confirmation/receipt if needed
+      navigate('/booking-confirmation', { state: { bookingId: result.id, paymentMethod } });
     }
   };
   
@@ -101,7 +126,25 @@ const BookingForm = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Book Appointment</h1>
-      
+      <div className="mb-4">
+        {selectedLab && (
+          <Card className="mb-5 border-blue-300 bg-blue-50">
+            <CardHeader>
+              <CardTitle>Selected Lab</CardTitle>
+              <CardDescription>{selectedLab.labName}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div><strong>Address:</strong> {selectedLab.labAddress} </div>
+                <div><strong>Phone:</strong> {selectedLab.labPhone}</div>
+                <div><strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐</div>
+                <div><strong>Hours:</strong> {selectedLab.labTimings}</div>
+                <div className="text-blue-900">{selectedLab.labDescription}</div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <form onSubmit={handleSubmit}>
@@ -231,6 +274,45 @@ const BookingForm = () => {
                     </Select>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Payment Method</CardTitle>
+                <CardDescription>Select how you want to pay</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={(value) => setPaymentMethod(value)}
+                  className="flex flex-col space-y-3"
+                >
+                  <div className="flex items-center space-x-2 border rounded-md p-4">
+                    <RadioGroupItem value="pay_at_lab" id="pay_at_lab" />
+                    <Label htmlFor="pay_at_lab" className="flex items-center cursor-pointer">
+                      <IndianRupee className="mr-2 h-5 w-5 text-green-600" />
+                      <span>Pay at Lab (Offline Payment)</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-md p-4">
+                    <RadioGroupItem value="pay_now_upi" id="pay_now_upi" />
+                    <Label htmlFor="pay_now_upi" className="flex items-center cursor-pointer">
+                      <CreditCard className="mr-2 h-5 w-5 text-blue-600" />
+                      <span>Pay Now (UPI)</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-md p-4">
+                    <RadioGroupItem value="pay_now_card" id="pay_now_card" />
+                    <Label htmlFor="pay_now_card" className="flex items-center cursor-pointer">
+                      <CreditCard className="mr-2 h-5 w-5 text-blue-400" />
+                      <span>Pay Now (Card)</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {paymentMethod.startsWith('pay_now') && (
+                  <div className="text-xs text-blue-600 mt-2 ml-2">* Online payment is a demo, no real payment will be taken.</div>
+                )}
               </CardContent>
             </Card>
             

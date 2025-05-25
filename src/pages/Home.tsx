@@ -1,9 +1,49 @@
 import React, { useState } from 'react';
-import { Search, MapPin, HomeIcon, Building2 } from 'lucide-react';
+import { Search, MapPin, HomeIcon, Building2, Star, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
+
+// Mock lab data (reuse structure from Labs)
+const homeLabs = [
+  {
+    id: 1,
+    name: "1MG Diagnostics",
+    address: "Aundh, Pune, Maharashtra 411017",
+    distance: "1.2 km",
+    rating: "4.8",
+    reviews: "324",
+    hours: "7:00 AM - 9:00 PM",
+    badges: ["NABL Certified", "ISO Certified", "Home Collection"],
+    startingPrice: "₹499",
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+  },
+  {
+    id: 2,
+    name: "Healthians",
+    address: "Baner, Pune, Maharashtra 411045",
+    distance: "2.5 km",
+    rating: "4.7",
+    reviews: "216",
+    hours: "8:00 AM - 8:00 PM",
+    badges: ["NABL Certified", "Home Collection"],
+    startingPrice: "₹599",
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+  },
+  {
+    id: 3,
+    name: "Apollo Diagnostics",
+    address: "Kothrud, Pune, Maharashtra 411038",
+    distance: "3.7 km",
+    rating: "4.6",
+    reviews: "198",
+    hours: "7:30 AM - 8:30 PM",
+    badges: ["ISO Certified", "Home Collection"],
+    startingPrice: "₹549",
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+  },
+];
 
 const Home = () => {
   const [location, setLocation] = useState('');
@@ -136,35 +176,65 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Popular Labs Section with horizontal scrolling */}
+      {/* Top Rated Pathology Labs Section, LABS-LIKE CARDS */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8">Top Rated Pathology Labs</h2>
+          <h2 className="text-3xl font-bold mb-8 flex items-center gap-2">
+            <HomeIcon className="h-7 w-7 text-patho-primary" />
+            Top Rated Pathology Labs
+          </h2>
           <div className="flex flex-nowrap overflow-x-auto gap-6 pb-4">
-            <LabCard 
-              name="MediLab Advanced Testing"
-              address="Aundh, Pune, Maharashtra 411017"
-              distance="1.2 km"
-              rating="4.8"
-              reviews="324"
-              badges={["NABL Certified", "ISO Certified", "Home Collection"]}
-            />
-            <LabCard 
-              name="City Central Pathology"
-              address="Baner, Pune, Maharashtra 411045"
-              distance="2.5 km"
-              rating="4.7"
-              reviews="216"
-              badges={["NABL Certified", "Home Collection"]}
-            />
-            <LabCard 
-              name="HealthTest Diagnostics"
-              address="Kothrud, Pune, Maharashtra 411038"
-              distance="3.7 km"
-              rating="4.6"
-              reviews="198"
-              badges={["ISO Certified", "Home Collection"]}
-            />
+            {homeLabs.map((lab) => (
+              <div key={lab.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 min-w-[320px] max-w-[340px] mb-4 hover:shadow-md transition-shadow">
+                <img src={lab.image} alt={lab.name} className="w-full h-36 object-cover rounded-lg mb-3" />
+                <h3 className="text-xl font-semibold mb-2">{lab.name}</h3>
+                <div className="flex items-center mb-3 text-yellow-700">
+                  <Star className="w-4 h-4 fill-yellow-400 mr-1" />
+                  <span className="font-bold text-lg">{lab.rating}</span>
+                  <span className="text-gray-500 text-sm ml-2">({lab.reviews} reviews)</span>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-700 text-sm">{lab.address}</span>
+                </div>
+                <div className="text-sm text-gray-500 mb-2">{lab.hours}</div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {lab.badges.map((badge, idx) => (
+                    <span
+                      key={idx}
+                      className={`text-xs font-medium px-2.5 py-0.5 rounded ${
+                        badge.includes("NABL")
+                          ? "bg-blue-100 text-blue-800"
+                          : badge.includes("ISO")
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-500 mb-1">Starting from</span>
+                  <span className="text-2xl font-bold text-patho-primary mb-3">{lab.startingPrice}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-blue-400 text-blue-700 font-semibold hover:bg-blue-100"
+                    onClick={() => navigate('/labs')}
+                  >
+                    View Lab
+                  </Button>
+                  <Button
+                    className="flex-1 bg-patho-primary hover:bg-patho-secondary"
+                    onClick={() => navigate('/booking', { state: { labId: lab.id } })}
+                  >
+                    Book Now
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
           <div className="text-center mt-8">
             <Button 

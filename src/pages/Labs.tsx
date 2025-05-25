@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Search, HomeIcon, Building2, Star, Filter, List, Grid3X3, MapPinned } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,13 +66,14 @@ const Labs = () => {
   const [viewType, setViewType] = useState('list'); // 'list', 'grid', or 'map'
   const [sortBy, setSortBy] = useState('relevance');
   const [labs, setLabs] = useState(mockLabs);
+  const [selectedLab, setSelectedLab] = useState<any | null>(null);
 
   const handleViewDetails = (labId: number) => {
     navigate(`/labs/${labId}`);
   };
 
-  const handleBookNow = (labId: number) => {
-    navigate(`/booking`, { state: { labId } });
+  const handleSelectLab = (lab: any) => {
+    setSelectedLab(lab);
   };
 
   return (
@@ -232,13 +232,32 @@ const Labs = () => {
                   </Button>
                   <Button 
                     className="flex-1 bg-patho-primary hover:bg-patho-secondary"
-                    onClick={() => handleBookNow(lab.id)}
+                    onClick={() => handleSelectLab(lab)}
                   >
-                    Book Now
+                    Select Lab
                   </Button>
                 </div>
               </div>
             </div>
+            {selectedLab && selectedLab.id === lab.id && (
+              <div className="mt-4 p-4 border-t bg-gray-50 rounded">
+                <h3 className="text-lg font-semibold mb-2">Lab Details</h3>
+                <div>
+                  <b>Name:</b> {selectedLab.name}<br />
+                  <b>Address:</b> {selectedLab.address}<br />
+                  <b>Phone:</b> {selectedLab.phone || "N/A"}<br />
+                  <b>Rating:</b> {selectedLab.rating}<br />
+                  <b>Hours:</b> {selectedLab.hours}<br />
+                  <b>Description:</b> {selectedLab.description || "N/A"}<br />
+                </div>
+                <Button
+                  className="mt-3 w-full bg-green-500 hover:bg-green-600"
+                  onClick={() => navigate('/booking', { state: { labId: selectedLab.id } })}
+                >
+                  Proceed to Book
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>

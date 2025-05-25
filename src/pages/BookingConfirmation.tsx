@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, Download, Calendar, Clock, MapPin, User, Phone, Mail, Home, Building2 } from 'lucide-react';
@@ -56,10 +55,21 @@ const BookingConfirmation = () => {
     );
   }
 
-  // Calculate total price
-  const price = bookingData.price ?? "₹0";
+  // Calculate total price with robust parsing:
+  // bookingData.price can be "₹200", "200", or number -- safe parsing
+  function parsePrice(val: any) {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      // Strip non-digit chars except dot, then parse float
+      const num = parseFloat(val.replace(/[^\d.]/g, ''));
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  }
+  const price = parsePrice(bookingData.price ?? "0");
   const collectionCharge = bookingData.sample_type === 'home' ? 50 : 0;
-  const totalAmount = ((parseInt(bookingData.price?.replace("₹", "") || "0") || 0) + collectionCharge);
+  const totalAmount = price + collectionCharge;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
