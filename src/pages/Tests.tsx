@@ -168,9 +168,20 @@ const Tests = () => {
 
   // On "Book Now", immediately navigate to the booking form for first (default) lab
   const handleBookNow = (test: any) => {
-    // Pick the first lab by default for simplicity—user can edit lab choice in the booking flow if needed
     const defaultLab = mockLabs[0];
-    navigate('/booking', { state: { testId: test.id, labId: defaultLab.id } });
+    navigate('/booking', { 
+      state: { 
+        testId: test.id, 
+        labId: defaultLab.id,
+        labName: defaultLab.name,
+        labAddress: defaultLab.address,
+        labPhone: defaultLab.phone,
+        labRating: defaultLab.rating,
+        labTimings: defaultLab.timings,
+        labDescription: defaultLab.description,
+        testPrice: test.discountedPrice // Pass price as string with ₹ 
+      } 
+    });
   };
 
   return (

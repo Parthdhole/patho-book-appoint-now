@@ -15,6 +15,11 @@ function mapBookingRow(row: any): Booking {
     testName: row.test_name,
     labId: row.lab_id ?? undefined,
     labName: row.lab_name ?? undefined,
+    labAddress: row.lab_address ?? undefined,
+    labPhone: row.lab_phone ?? undefined,
+    labRating: row.lab_rating ?? undefined,
+    labDescription: row.lab_description ?? undefined,
+    labTimings: row.lab_timings ?? undefined,
     appointmentDate: new Date(row.appointment_date),
     appointmentTime: row.appointment_time,
     patientName: row.patient_name,
@@ -27,6 +32,9 @@ function mapBookingRow(row: any): Booking {
     status: row.status,
     paymentStatus: row.payment_status,
     createdAt: new Date(row.created_at),
+    price: row.price ?? undefined,
+    baseTestPrice: row.baseTestPrice ?? undefined,
+    collectionCharge: row.collectionCharge ?? undefined,
   }
 }
 
@@ -67,6 +75,11 @@ export const useBooking = () => {
           test_name: bookingData.testName,
           lab_id: bookingData.labId ?? null,
           lab_name: bookingData.labName ?? null,
+          lab_address: bookingData.labAddress ?? null,
+          lab_phone: bookingData.labPhone ?? null,
+          lab_rating: bookingData.labRating ?? null,
+          lab_description: bookingData.labDescription ?? null,
+          lab_timings: bookingData.labTimings ?? null,
           appointment_date: appointmentDate,
           appointment_time: bookingData.appointmentTime,
           patient_name: bookingData.patientName,
@@ -79,6 +92,9 @@ export const useBooking = () => {
           status: bookingData.status,
           payment_status: bookingData.paymentStatus,
           created_at: new Date().toISOString(),
+          price: bookingData.price ?? null,
+          baseTestPrice: bookingData.baseTestPrice ?? null,
+          collectionCharge: bookingData.collectionCharge ?? null,
         }])
         .select()
         .maybeSingle();

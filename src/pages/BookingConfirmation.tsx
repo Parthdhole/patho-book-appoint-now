@@ -17,6 +17,12 @@ const BookingConfirmation = () => {
   const [bookingData, setBookingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Get extra info via location.state
+  const paymentMethodFromState = location.state?.paymentMethod ?? null;
+  const passedTotalAmount = location.state?.totalAmount ?? null;
+  const passedBaseTestPrice = location.state?.baseTestPrice ?? null;
+  const passedCollectionCharge = location.state?.collectionCharge ?? null;
+
   useEffect(() => {
     const fetchBooking = async () => {
       if (bookingId) {
@@ -55,21 +61,39 @@ const BookingConfirmation = () => {
     );
   }
 
-  // Calculate total price with robust parsing:
-  // bookingData.price can be "₹200", "200", or number -- safe parsing
+  // Get price info from DB or fallback to state (for instant display)
   function parsePrice(val: any) {
     if (!val) return 0;
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      // Strip non-digit chars except dot, then parse float
       const num = parseFloat(val.replace(/[^\d.]/g, ''));
       return isNaN(num) ? 0 : num;
     }
     return 0;
   }
-  const price = parsePrice(bookingData.price ?? "0");
-  const collectionCharge = bookingData.sample_type === 'home' ? 50 : 0;
-  const totalAmount = price + collectionCharge;
+  // If bookingData contains `price`, use that directly for total; if not, sum
+  const price = bookingData.price !== undefined 
+    ? parsePrice(bookingData.price)
+    : passedTotalAmount !== undefined
+      ? parsePrice(passedTotalAmount)
+      : parsePrice(bookingData.test_price ?? 0);
+  // Try to show base price and collection charge if available
+  const baseTestPrice = bookingData.baseTestPrice !== undefined 
+    ? parsePrice(bookingData.baseTestPrice)
+    : passedBaseTestPrice !== undefined
+      ? parsePrice(passedBaseTestPrice)
+      : parsePrice(bookingData.price ?? 0);
+
+  const collectionCharge = bookingData.collectionCharge !== undefined
+    ? parsePrice(bookingData.collectionCharge)
+    : passedCollectionCharge !== undefined
+      ? parsePrice(passedCollectionCharge)
+      : (bookingData.sample_type === 'home' ? 100 : 0);
+
+  // If the value still can't be resolved, fallback
+  const totalAmount = price || (baseTestPrice + collectionCharge);
+  // Use paymentMethod from booking or state
+  const paymentMethod = paymentMethodFromState ?? "Credit Card"; // fallback for now
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -100,6 +124,22 @@ const BookingConfirmation = () => {
             <p className="text-sm">{new Date(bookingData.created_at).toLocaleDateString()}</p>
           </div>
         </div>
+        {bookingData.lab_name && (
+          <Card className="mb-6">
+            <CardHeader className="bg-blue-50">
+              <CardTitle>Selected Lab</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <div><strong>Name:</strong> {bookingData.lab_name}</div>
+                {bookingData.lab_address && <div><strong>Address:</strong> {bookingData.lab_address}</div>}
+                {bookingData.lab_phone && <div><strong>Phone:</strong> {bookingData.lab_phone}</div>}
+                {bookingData.lab_rating && <div><strong>Rating:</strong> {bookingData.lab_rating} ⭐</div>}
+                {bookingData.lab_timings && <div><strong>Hours:</strong> {bookingData.lab_timings}</div>}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card className="mb-6">
           <CardHeader className="bg-blue-50">
             <CardTitle>Test Details</CardTitle>
@@ -195,11 +235,11 @@ const BookingConfirmation = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Test Cost</span>
-                <span>{bookingData.price ?? "₹0"}</span>
+                <span>₹{baseTestPrice}</span>
               </div>
               <div className="flex justify-between">
                 <span>Collection Charges</span>
-                <span>{bookingData.sample_type === 'home' ? '₹50' : '₹0'}</span>
+                <span>₹{collectionCharge}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
@@ -214,7 +254,7 @@ const BookingConfirmation = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Payment Method</span>
-                <span>Credit Card</span>
+                <span>{paymentMethod}</span>
               </div>
             </div>
           </CardContent>

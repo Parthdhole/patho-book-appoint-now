@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,12 +27,12 @@ const PartnerApplications = () => {
 
   useEffect(() => {
     setLoading(true);
-    // We suppress TS errors because partner_applications is not in the supabase types
-    supabase
-      .from("partner_applications" as any)
+    // Use any to circumvent type errors for the table not typed by Supabase
+    (supabase as any)
+      .from("partner_applications")
       .select("*")
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: { data: any[] }) => {
         if (Array.isArray(data)) {
           setApplications(
             data.filter(row =>
