@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Filter, Clock, Droplet, CalendarClock } from 'lucide-react';
+import { Search, Filter, Clock, Droplet, CalendarClock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const mockTests = [
   {
@@ -103,15 +104,50 @@ const mockTests = [
   }
 ];
 
+// Mock labs for selection
+const mockLabs = [
+  {
+    id: 101,
+    name: "City Lab Diagnostics",
+    address: "123 Main Street, Mumbai",
+    phone: "9000000001",
+    rating: 4.5,
+    timings: "Mon-Sat: 8am-8pm",
+    description: "NABL Accredited Lab with 20+ years experience.",
+  },
+  {
+    id: 102,
+    name: "Health First Labs",
+    address: "456 Park Avenue, Pune",
+    phone: "9000000002",
+    rating: 4.1,
+    timings: "Mon-Sun: 7am-7pm",
+    description: "Modern diagnostic facilities.",
+  },
+  {
+    id: 103,
+    name: "Apollo Diagnostic Centre",
+    address: "789 High Road, Delhi",
+    phone: "9000000003",
+    rating: 4.8,
+    timings: "Mon-Fri: 8am-8pm, Sat: 8am-4pm",
+    description: "Trusted for accuracy & reliability.",
+  },
+];
+
 const Tests = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Tests');
   const [sortBy, setSortBy] = useState('popular');
   const [filteredTests, setFilteredTests] = useState(mockTests);
-  
+
+  // For Select Lab dialog
+  const [labSelectOpen, setLabSelectOpen] = useState(false);
+  const [selectedTestForLab, setSelectedTestForLab] = useState(null);
+
   const categories = ['All Tests', 'Blood Tests', 'Hormone Tests', 'Vitamin Tests', 'Diabetes Tests', 'Organ Function Tests', 'Infection Tests'];
-  
+
   const handleSearch = () => {
     const filtered = mockTests.filter(test => 
       test.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -119,7 +155,7 @@ const Tests = () => {
     );
     setFilteredTests(filtered);
   };
-  
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     if (category === 'All Tests') {
@@ -129,9 +165,18 @@ const Tests = () => {
       setFilteredTests(filtered);
     }
   };
-  
-  const handleBookTest = (testId: number) => {
-    navigate('/booking', { state: { testId } });
+
+  // Open the lab picker dialog
+  const handleSelectLab = (test: any) => {
+    setSelectedTestForLab(test);
+    setLabSelectOpen(true);
+  };
+
+  // When a lab is chosen, go to booking form with test & lab info
+  const handleLabChosen = (lab: any) => {
+    setLabSelectOpen(false);
+    navigate('/booking', { state: { testId: selectedTestForLab.id, labId: lab.id, labName: lab.name, labAddress: lab.address, labPhone: lab.phone, labRating: lab.rating, labDescription: lab.description, labTimings: lab.timings } });
+    setSelectedTestForLab(null);
   };
 
   return (
@@ -245,13 +290,38 @@ const Tests = () => {
             
             <Button 
               className="w-full bg-patho-primary hover:bg-patho-secondary"
-              onClick={() => handleBookTest(test.id)}
+              onClick={() => handleSelectLab(test)}
             >
-              Book Now
+              Select Lab
             </Button>
           </div>
         ))}
       </div>
+
+      {/* Select Lab Dialog */}
+      <Dialog open={labSelectOpen} onOpenChange={setLabSelectOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select a Lab</DialogTitle>
+            <DialogDescription>
+              Choose from nearby or partner labs for your selected test.
+            </DialogDescription>
+          </DialogHeader>
+          {mockLabs.map((lab) => (
+            <div key={lab.id} className="border rounded p-4 mb-3 flex justify-between items-center">
+              <div>
+                <div className="text-lg font-semibold flex items-center gap-1"><Building2 className="w-4 h-4 mr-1" /> {lab.name}</div>
+                <div className="text-gray-600 text-sm">{lab.address}</div>
+                <div className="text-gray-500 text-xs mt-1">{lab.timings}</div>
+                <div className="text-blue-900 text-xs mt-1">{lab.description}</div>
+                <div className="text-yellow-600 text-xs">⭐ {lab.rating}</div>
+              </div>
+              <Button onClick={() => handleLabChosen(lab)}>Choose</Button>
+            </div>
+          ))}
+          <Button variant="ghost" className="w-full" onClick={() => setLabSelectOpen(false)}>Cancel</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
