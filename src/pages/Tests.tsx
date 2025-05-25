@@ -166,17 +166,11 @@ const Tests = () => {
     }
   };
 
-  // Open the lab picker dialog
-  const handleSelectLab = (test: any) => {
-    setSelectedTestForLab(test);
-    setLabSelectOpen(true);
-  };
-
-  // When a lab is chosen, go to booking form with test & lab info
-  const handleLabChosen = (lab: any) => {
-    setLabSelectOpen(false);
-    navigate('/booking', { state: { testId: selectedTestForLab.id, labId: lab.id, labName: lab.name, labAddress: lab.address, labPhone: lab.phone, labRating: lab.rating, labDescription: lab.description, labTimings: lab.timings } });
-    setSelectedTestForLab(null);
+  // On "Book Now", immediately navigate to the booking form for first (default) lab
+  const handleBookNow = (test: any) => {
+    // Pick the first lab by default for simplicity—user can edit lab choice in the booking flow if needed
+    const defaultLab = mockLabs[0];
+    navigate('/booking', { state: { testId: test.id, labId: defaultLab.id } });
   };
 
   return (
@@ -290,38 +284,13 @@ const Tests = () => {
             
             <Button 
               className="w-full bg-patho-primary hover:bg-patho-secondary"
-              onClick={() => handleSelectLab(test)}
+              onClick={() => handleBookNow(test)}
             >
-              Select Lab
+              Book Now
             </Button>
           </div>
         ))}
       </div>
-
-      {/* Select Lab Dialog */}
-      <Dialog open={labSelectOpen} onOpenChange={setLabSelectOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Select a Lab</DialogTitle>
-            <DialogDescription>
-              Choose from nearby or partner labs for your selected test.
-            </DialogDescription>
-          </DialogHeader>
-          {mockLabs.map((lab) => (
-            <div key={lab.id} className="border rounded p-4 mb-3 flex justify-between items-center">
-              <div>
-                <div className="text-lg font-semibold flex items-center gap-1"><Building2 className="w-4 h-4 mr-1" /> {lab.name}</div>
-                <div className="text-gray-600 text-sm">{lab.address}</div>
-                <div className="text-gray-500 text-xs mt-1">{lab.timings}</div>
-                <div className="text-blue-900 text-xs mt-1">{lab.description}</div>
-                <div className="text-yellow-600 text-xs">⭐ {lab.rating}</div>
-              </div>
-              <Button onClick={() => handleLabChosen(lab)}>Choose</Button>
-            </div>
-          ))}
-          <Button variant="ghost" className="w-full" onClick={() => setLabSelectOpen(false)}>Cancel</Button>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
