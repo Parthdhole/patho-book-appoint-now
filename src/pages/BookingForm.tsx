@@ -45,9 +45,6 @@ const BookingForm = () => {
       }
     : null;
 
-  // Get the test price (sent from navigation) if available
-  const testPriceStr = location.state?.testPrice ?? null;
-
   const [testId, setTestId] = useState<number | null>(
     location.state?.testId || null
   );
@@ -85,15 +82,11 @@ const BookingForm = () => {
     if (!selectedTest) {
       return;
     }
-    // Parse testPrice as number
-    const testPriceRaw = testPriceStr ?? selectedTest.discountedPrice;
-    const testPriceNum = typeof testPriceRaw === "number" ? testPriceRaw : parseInt(String(testPriceRaw).replace('₹', '').trim());
-    // Home collection charge matches what's shown in summary. Let's use 100 to match summary.
-    const collectionCharge = sampleType === 'home' ? 100 : 0;
-
-    const bookingData: BookingFormData & { price: number } = {
+    
+    const bookingData: BookingFormData = {
       testId,
       testName: selectedTest.name,
+      // NEW: Include selected lab data if present
       labId: selectedLab?.labId,
       labName: selectedLab?.labName,
       appointmentDate: selectedDate,
@@ -107,16 +100,14 @@ const BookingForm = () => {
       address: sampleType === 'home' ? formData.address : undefined,
       status: 'pending',
       paymentStatus: paymentMethod === 'pay_at_lab' ? 'pending' : 'paid',
-      createdAt: new Date(),
-      price: testPriceNum + collectionCharge, // store total price (test + collection)
-      baseTestPrice: testPriceNum, // save base price, for details (optional)
-      collectionCharge: collectionCharge,     // (optional) save as well
+      createdAt: new Date()
     };
     
     const result = await createBooking(bookingData);
     
     if (result) {
-      navigate('/booking-confirmation', { state: { bookingId: result.id, paymentMethod, totalAmount: bookingData.price, baseTestPrice: testPriceNum, collectionCharge, selectedLab } });
+      // Pass payment info for confirmation/receipt if needed
+      navigate('/booking-confirmation', { state: { bookingId: result.id, paymentMethod } });
     }
   };
   
@@ -144,11 +135,11 @@ const BookingForm = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Address:</strong> {selectedLab.labAddress || "N/A"} </div>
-                <div><strong>Phone:</strong> {selectedLab.labPhone || "N/A"}</div>
+                <div><strong>Address:</strong> {selectedLab.labAddress} </div>
+                <div><strong>Phone:</strong> {selectedLab.labPhone}</div>
                 <div><strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐</div>
-                <div><strong>Hours:</strong> {selectedLab.labTimings || "N/A"}</div>
-                {!!selectedLab.labDescription && <div className="text-blue-900">{selectedLab.labDescription}</div>}
+                <div><strong>Hours:</strong> {selectedLab.labTimings}</div>
+                <div className="text-blue-900">{selectedLab.labDescription}</div>
               </div>
             </CardContent>
           </Card>
