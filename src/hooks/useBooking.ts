@@ -30,6 +30,7 @@ function mapBookingRow(row: any): Booking {
   }
 }
 
+// Add a 'price' property to BookingFormData
 export const useBooking = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -58,7 +59,7 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
-      // Insert booking
+      // Insert booking with price
       const { data, error } = await supabase
         .from('bookings')
         .insert([{
@@ -79,6 +80,7 @@ export const useBooking = () => {
           status: bookingData.status,
           payment_status: bookingData.paymentStatus,
           created_at: new Date().toISOString(),
+          price: bookingData.price ?? null,  // <--- Add price
         }])
         .select()
         .maybeSingle();

@@ -1,12 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
-// The project does not have partner_applications table in Supabase types,
-// so use a safe casting approach and guard the fetch against errors.
 interface PartnerApplication {
   id: string;
   lab_name: string;
@@ -28,27 +25,27 @@ const PartnerApplications = () => {
 
   useEffect(() => {
     setLoading(true);
-    // We suppress TS errors because partner_applications is not in the supabase types
+    // Fetch and filter out invalid or error rows for type safety.
     supabase
       .from("partner_applications" as any)
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
+        // Only map rows if they have expected keys (exclude errors)
         if (Array.isArray(data)) {
-          setApplications(
-            data.filter(row =>
-              row &&
-              typeof row.id === "string" &&
-              typeof row.lab_name === "string" &&
-              typeof row.owner_name === "string" &&
-              typeof row.email === "string" &&
-              typeof row.phone === "string" &&
-              typeof row.address === "string" &&
-              typeof row.city === "string" &&
-              typeof row.status === "string" &&
-              typeof row.created_at === "string"
-            ) as PartnerApplication[]
+          const filtered = data.filter((row: any) =>
+            row &&
+            typeof row.id === "string" &&
+            typeof row.lab_name === "string" &&
+            typeof row.owner_name === "string" &&
+            typeof row.email === "string" &&
+            typeof row.phone === "string" &&
+            typeof row.address === "string" &&
+            typeof row.city === "string" &&
+            typeof row.status === "string" &&
+            typeof row.created_at === "string"
           );
+          setApplications(filtered as PartnerApplication[]);
         } else {
           setApplications([]);
         }

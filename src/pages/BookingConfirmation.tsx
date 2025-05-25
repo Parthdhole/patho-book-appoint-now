@@ -13,6 +13,8 @@ const BookingConfirmation = () => {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
   const bookingId = location.state?.bookingId || null;
+  // If price is in location.state, prefer that (from recent booking), else fallback to DB price
+  const locationPrice = location.state?.price || null;
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -55,20 +57,22 @@ const BookingConfirmation = () => {
     );
   }
 
-  // Calculate total price with robust parsing:
-  // bookingData.price can be "₹200", "200", or number -- safe parsing
+  // Calculate total price robustly (prefer location.state.price for immediate booking, else use db stored)
   function parsePrice(val: any) {
     if (!val) return 0;
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      // Strip non-digit chars except dot, then parse float
       const num = parseFloat(val.replace(/[^\d.]/g, ''));
       return isNaN(num) ? 0 : num;
     }
     return 0;
   }
-  const price = parsePrice(bookingData.price ?? "0");
-  const collectionCharge = bookingData.sample_type === 'home' ? 50 : 0;
+  const price =
+    locationPrice != null
+      ? parsePrice(locationPrice)
+      : parsePrice(bookingData.price ?? "0");
+
+  const collectionCharge = bookingData.sample_type === 'home' ? 100 : 0;
   const totalAmount = price + collectionCharge;
 
   return (
@@ -143,7 +147,9 @@ const BookingConfirmation = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Price</p>
-                <p className="font-medium text-patho-primary">{bookingData.price ?? "₹0"}</p>
+                <p className="font-medium text-patho-primary">
+                  ₹{price}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -195,11 +201,11 @@ const BookingConfirmation = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Test Cost</span>
-                <span>{bookingData.price ?? "₹0"}</span>
+                <span>₹{price}</span>
               </div>
               <div className="flex justify-between">
                 <span>Collection Charges</span>
-                <span>{bookingData.sample_type === 'home' ? '₹50' : '₹0'}</span>
+                <span>{bookingData.sample_type === 'home' ? '₹100' : 'Free'}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
@@ -210,11 +216,19 @@ const BookingConfirmation = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Payment Status</span>
-                <span className="text-green-600 font-medium">{bookingData.payment_status === "paid" ? "Paid" : bookingData.payment_status}</span>
+                <span className="text-green-600 font-medium">
+                  {bookingData.payment_status === "paid" ? "Paid" : bookingData.payment_status}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Payment Method</span>
-                <span>Credit Card</span>
+                <span>
+                  {location.state?.paymentMethod === "pay_now_card"
+                    ? "Credit Card"
+                    : location.state?.paymentMethod === "pay_now_upi"
+                    ? "UPI"
+                    : "Pay at Lab"}
+                </span>
               </div>
             </div>
           </CardContent>
