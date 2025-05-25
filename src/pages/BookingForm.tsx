@@ -29,7 +29,7 @@ const BookingForm = () => {
     (location.state?.sampleType as 'home' | 'lab') || 'home'
   );
 
-  // Add price to the labInfo object (if present in route state)
+  // New: Accept lab context fields
   const selectedLab = location.state?.labId
     ? {
         labId: location.state.labId,
@@ -60,9 +60,8 @@ const BookingForm = () => {
   const selectedTest = testId ? mockTests.find(test => test.id === testId) : null;
   const testCost = selectedTest ? (selectedTest.discountedPrice || selectedTest.originalPrice || '₹0') : '₹0';
   const collectionCharge = sampleType === 'home' ? 100 : 0;
-  const totalPrice =
-    '₹' +
-    (parseInt((testCost as string).replace('₹', '')) + (collectionCharge || 0));
+  const testCostNumber = typeof testCost === 'string' ? parseInt(testCost.replace('₹', '')) : 0;
+  const totalPrice = testCostNumber + collectionCharge;
 
   // NEW: Payment method state
   const [paymentMethod, setPaymentMethod] = useState<string>('pay_at_lab');
@@ -80,27 +79,17 @@ const BookingForm = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!selectedDate || !testId || !selectedTest) {
       return;
     }
-    
-    // Parse the numeric price to store in booking
-    const priceValue =
-      typeof selectedTest.discountedPrice === 'string'
-        ? parseInt(selectedTest.discountedPrice.replace('₹', '')) || 0
-        : 0;
-    
+    const priceValue = testCostNumber;
+
     const bookingData: BookingFormData = {
       testId,
       testName: selectedTest.name,
       labId: selectedLab?.labId,
       labName: selectedLab?.labName,
-      labAddress: selectedLab?.labAddress,
-      labPhone: selectedLab?.labPhone,
-      labRating: selectedLab?.labRating,
-      labDescription: selectedLab?.labDescription,
-      labTimings: selectedLab?.labTimings,
+      // Do NOT add UI detail fields to BookingFormData main object!
       appointmentDate: selectedDate,
       appointmentTime: formData.appointmentTime,
       patientName: formData.patientName,
@@ -112,19 +101,27 @@ const BookingForm = () => {
       address: sampleType === 'home' ? formData.address : undefined,
       status: 'pending',
       paymentStatus: paymentMethod === 'pay_at_lab' ? 'pending' : 'paid',
-      price: priceValue,
-      createdAt: new Date()
+      price: priceValue, // store booking test price for confirmation/receipt
+      createdAt: new Date(),
+      labAddress: selectedLab?.labAddress,
+      labPhone: selectedLab?.labPhone,
+      labRating: selectedLab?.labRating,
+      labDescription: selectedLab?.labDescription,
+      labTimings: selectedLab?.labTimings,
     };
-    
     const result = await createBooking(bookingData);
-    
     if (result) {
-      // Pass payment info for confirmation/receipt if needed
       navigate('/booking-confirmation', {
         state: {
           bookingId: result.id,
           paymentMethod,
-          price: priceValue, // pass price to confirmation
+          price: priceValue,
+          labName: selectedLab?.labName,
+          labAddress: selectedLab?.labAddress,
+          labPhone: selectedLab?.labPhone,
+          labRating: selectedLab?.labRating,
+          labDescription: selectedLab?.labDescription,
+          labTimings: selectedLab?.labTimings,
         },
       });
     }
@@ -143,27 +140,24 @@ const BookingForm = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Book Appointment</h1>
-      <div className="mb-4">
-        {selectedLab && (
-          <Card className="mb-5 border-blue-300 bg-blue-50">
-            <CardHeader>
-              <CardTitle>Selected Lab</CardTitle>
-              <CardDescription>{selectedLab.labName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div><strong>Address:</strong> {selectedLab.labAddress || "-"} </div>
-                <div><strong>Phone:</strong> {selectedLab.labPhone || "-"} </div>
-                <div>
-                  <strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐
-                </div>
-                <div><strong>Hours:</strong> {selectedLab.labTimings || "-"}</div>
-                <div className="text-blue-900">{selectedLab.labDescription || "-"}</div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Show lab info if selected */}
+      {selectedLab && (
+        <div className="mb-5">
+          <div className="rounded border border-blue-300 bg-blue-50 p-4 mb-4">
+            <h2 className="font-bold text-lg mb-2">Selected Lab</h2>
+            <div className="mb-1"><strong>Name:</strong> {selectedLab.labName}</div>
+            <div className="mb-1"><strong>Address:</strong> {selectedLab.labAddress || '-'}</div>
+            <div className="mb-1"><strong>Phone:</strong> {selectedLab.labPhone || '-'}</div>
+            <div className="mb-1">
+              <strong>Rating:</strong> {selectedLab.labRating ?? '-'} <span role="img" aria-label="star">⭐</span>
+            </div>
+            <div className="mb-1"><strong>Hours:</strong> {selectedLab.labTimings || '-'}</div>
+            {selectedLab.labDescription && (
+              <div className="text-blue-900 mb-1">{selectedLab.labDescription}</div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <form onSubmit={handleSubmit}>
