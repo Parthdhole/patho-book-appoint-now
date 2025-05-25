@@ -29,7 +29,10 @@ const BookingForm = () => {
     (location.state?.sampleType as 'home' | 'lab') || 'home'
   );
 
-  // Add price to the labInfo object (if present in route state)
+  // NEW: Payment method state
+  const [paymentMethod, setPaymentMethod] = useState<string>('pay_at_lab');
+
+  // NEW: Get selected lab info (from navigation state)
   const selectedLab = location.state?.labId
     ? {
         labId: location.state.labId,
@@ -55,18 +58,7 @@ const BookingForm = () => {
     appointmentTime: '09:00',
     address: '',
   });
-
-  // Calculate the total price and test price
-  const selectedTest = testId ? mockTests.find(test => test.id === testId) : null;
-  const testCost = selectedTest ? (selectedTest.discountedPrice || selectedTest.originalPrice || '₹0') : '₹0';
-  const collectionCharge = sampleType === 'home' ? 100 : 0;
-  const totalPrice =
-    '₹' +
-    (parseInt((testCost as string).replace('₹', '')) + (collectionCharge || 0));
-
-  // NEW: Payment method state
-  const [paymentMethod, setPaymentMethod] = useState<string>('pay_at_lab');
-
+  
   const timeSlots = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
     '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
@@ -81,26 +73,22 @@ const BookingForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !testId || !selectedTest) {
+    if (!selectedDate || !testId) {
       return;
     }
     
-    // Parse the numeric price to store in booking
-    const priceValue =
-      typeof selectedTest.discountedPrice === 'string'
-        ? parseInt(selectedTest.discountedPrice.replace('₹', '')) || 0
-        : 0;
+    const selectedTest = mockTests.find(test => test.id === testId);
+    
+    if (!selectedTest) {
+      return;
+    }
     
     const bookingData: BookingFormData = {
       testId,
       testName: selectedTest.name,
+      // NEW: Include selected lab data if present
       labId: selectedLab?.labId,
       labName: selectedLab?.labName,
-      labAddress: selectedLab?.labAddress,
-      labPhone: selectedLab?.labPhone,
-      labRating: selectedLab?.labRating,
-      labDescription: selectedLab?.labDescription,
-      labTimings: selectedLab?.labTimings,
       appointmentDate: selectedDate,
       appointmentTime: formData.appointmentTime,
       patientName: formData.patientName,
@@ -112,7 +100,6 @@ const BookingForm = () => {
       address: sampleType === 'home' ? formData.address : undefined,
       status: 'pending',
       paymentStatus: paymentMethod === 'pay_at_lab' ? 'pending' : 'paid',
-      price: priceValue,
       createdAt: new Date()
     };
     
@@ -120,13 +107,7 @@ const BookingForm = () => {
     
     if (result) {
       // Pass payment info for confirmation/receipt if needed
-      navigate('/booking-confirmation', {
-        state: {
-          bookingId: result.id,
-          paymentMethod,
-          price: priceValue, // pass price to confirmation
-        },
-      });
+      navigate('/booking-confirmation', { state: { bookingId: result.id, paymentMethod } });
     }
   };
   
@@ -135,6 +116,8 @@ const BookingForm = () => {
       navigate('/tests');
     }
   }, [testId, navigate]);
+  
+  const selectedTest = testId ? mockTests.find(test => test.id === testId) : null;
   
   if (!selectedTest) {
     return <div className="p-8 text-center">Loading...</div>;
@@ -152,13 +135,11 @@ const BookingForm = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Address:</strong> {selectedLab.labAddress || "-"} </div>
-                <div><strong>Phone:</strong> {selectedLab.labPhone || "-"} </div>
-                <div>
-                  <strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐
-                </div>
-                <div><strong>Hours:</strong> {selectedLab.labTimings || "-"}</div>
-                <div className="text-blue-900">{selectedLab.labDescription || "-"}</div>
+                <div><strong>Address:</strong> {selectedLab.labAddress} </div>
+                <div><strong>Phone:</strong> {selectedLab.labPhone}</div>
+                <div><strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐</div>
+                <div><strong>Hours:</strong> {selectedLab.labTimings}</div>
+                <div className="text-blue-900">{selectedLab.labDescription}</div>
               </div>
             </CardContent>
           </Card>
@@ -432,7 +413,7 @@ const BookingForm = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Test Price</span>
-                  <span>{testCost}</span>
+                  <span>{selectedTest.discountedPrice}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">
@@ -443,7 +424,12 @@ const BookingForm = () => {
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span className="text-blue-800">{totalPrice}</span>
+                    <span className="text-blue-800">
+                      {sampleType === 'home' 
+                        ? `₹${parseInt(selectedTest.discountedPrice.replace('₹', '')) + 100}`
+                        : selectedTest.discountedPrice
+                      }
+                    </span>
                   </div>
                 </div>
               </div>
