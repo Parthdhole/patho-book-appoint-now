@@ -25,15 +25,15 @@ const PartnerApplications = () => {
 
   useEffect(() => {
     setLoading(true);
-
+    // Fetch and filter out invalid or error rows for type safety.
     supabase
-      .from("partner_applications")
+      .from("partner_applications" as any)
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
+        // Only map rows if they have expected keys (exclude errors)
         if (Array.isArray(data)) {
-          // Force valid PartnerApplication[] type by filtering clearly
-          const filtered: PartnerApplication[] = data.filter((row: any) =>
+          const filtered = data.filter((row: any) =>
             row &&
             typeof row.id === "string" &&
             typeof row.lab_name === "string" &&

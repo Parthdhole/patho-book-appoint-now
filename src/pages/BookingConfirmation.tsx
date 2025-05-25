@@ -57,9 +57,9 @@ const BookingConfirmation = () => {
     );
   }
 
-  // --fix price calculation--
+  // Calculate total price robustly (prefer location.state.price for immediate booking, else use db stored)
   function parsePrice(val: any) {
-    if (val === undefined || val === null) return 0;
+    if (!val) return 0;
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
       const num = parseFloat(val.replace(/[^\d.]/g, ''));
@@ -117,32 +117,6 @@ const BookingConfirmation = () => {
               <div>
                 <p className="text-sm text-gray-500">Lab Name</p>
                 <p className="font-medium">{bookingData.lab_name ?? "N/A"}</p>
-                {/* Show more lab details if available */}
-                {bookingData.lab_address && (
-                  <div>
-                    <p className="text-xs text-gray-500 mt-1"><strong>Address:</strong> {bookingData.lab_address}</p>
-                  </div>
-                )}
-                {bookingData.lab_phone && (
-                  <div>
-                    <p className="text-xs text-gray-500"><strong>Phone:</strong> {bookingData.lab_phone}</p>
-                  </div>
-                )}
-                {bookingData.lab_rating && (
-                  <div>
-                    <p className="text-xs text-gray-500"><strong>Rating:</strong> {bookingData.lab_rating} ⭐</p>
-                  </div>
-                )}
-                {bookingData.lab_timings && (
-                  <div>
-                    <p className="text-xs text-gray-500"><strong>Hours:</strong> {bookingData.lab_timings}</p>
-                  </div>
-                )}
-                {bookingData.lab_description && (
-                  <div>
-                    <p className="text-xs text-gray-500"><strong>About Lab:</strong> {bookingData.lab_description}</p>
-                  </div>
-                )}
               </div>
               <div className="flex items-start gap-2">
                 <Calendar className="h-4 w-4 text-patho-primary mt-0.5" />

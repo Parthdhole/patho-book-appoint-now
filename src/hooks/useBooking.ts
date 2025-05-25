@@ -1,10 +1,12 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingFormData, Booking } from '@/types/booking';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+// The table is now named `bookings` in supabase, so we'll reference that in all API calls!
+
+// Add a utility to map supabase booking row to app Booking type
 function mapBookingRow(row: any): Booking {
   return {
     id: row.id,
@@ -25,16 +27,10 @@ function mapBookingRow(row: any): Booking {
     status: row.status,
     paymentStatus: row.payment_status,
     createdAt: new Date(row.created_at),
-    price: row.price ?? undefined, // ensure price is read in
-    // Optionally include contextual lab details if present for UI
-    labAddress: row.lab_address ?? undefined,
-    labPhone: row.lab_phone ?? undefined,
-    labRating: row.lab_rating ?? undefined,
-    labDescription: row.lab_description ?? undefined,
-    labTimings: row.lab_timings ?? undefined,
   }
 }
 
+// Add a 'price' property to BookingFormData
 export const useBooking = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -58,10 +54,12 @@ export const useBooking = () => {
 
       const userId = session.session.user.id;
 
+      // Convert Date to ISO string for db
       const appointmentDate = (bookingData.appointmentDate instanceof Date)
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
+      // Insert booking with price
       const { data, error } = await supabase
         .from('bookings')
         .insert([{
@@ -82,8 +80,7 @@ export const useBooking = () => {
           status: bookingData.status,
           payment_status: bookingData.paymentStatus,
           created_at: new Date().toISOString(),
-          price: bookingData.price ?? null,  // <--- Add price for test
-          // UI context fields NOT sent to DB: labAddress, labPhone, etc.
+          price: bookingData.price ?? null,  // <--- Add price
         }])
         .select()
         .maybeSingle();
@@ -138,6 +135,8 @@ export const useBooking = () => {
       setIsLoading(false);
     }
   };
+
+  // You can add real-time support using the custom hook below!
 
   return {
     createBooking,
