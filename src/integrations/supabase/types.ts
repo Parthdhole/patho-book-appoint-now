@@ -72,6 +72,36 @@ export type Database = {
         }
         Relationships: []
       }
+      labs: {
+        Row: {
+          address: string | null
+          created_at: string
+          hours: string | null
+          id: string
+          name: string
+          phone: string | null
+          rating: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          rating?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          rating?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -104,6 +134,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tests: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          lab_id: string | null
+          name: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          lab_id?: string | null
+          name: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          lab_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_lab_id_fkey"
+            columns: ["lab_id"]
+            isOneToOne: false
+            referencedRelation: "labs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

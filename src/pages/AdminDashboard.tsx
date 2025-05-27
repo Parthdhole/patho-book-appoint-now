@@ -1,10 +1,11 @@
-
 import React from "react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useNavigate } from "react-router-dom";
 import AdminCardStats from "@/components/admin/AdminCardStats";
 import PartnerApplications from "@/components/admin/PartnerApplications";
 import BookingsTableAdmin from "@/components/admin/BookingsTableAdmin";
+import AdminLabsManager from "@/components/admin/AdminLabsManager";
+import AdminTestsManager from "@/components/admin/AdminTestsManager";
 
 export default function AdminDashboard() {
   const { isAdmin, loading } = useAdminRole();
@@ -30,10 +31,18 @@ export default function AdminDashboard() {
         <div>
           <h2 className="text-xl font-semibold mb-3">Partner Applications</h2>
           <PartnerApplications />
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-3">Manage Labs</h2>
+            <AdminLabsManager />
+          </div>
         </div>
         <div>
           <h2 className="text-xl font-semibold mb-3">Recent Bookings</h2>
           <BookingsTableAdmin />
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-3">Manage Tests</h2>
+            <AdminTestsManager />
+          </div>
         </div>
       </div>
     </div>
