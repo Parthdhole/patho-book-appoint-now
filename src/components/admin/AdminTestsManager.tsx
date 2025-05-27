@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface Lab {
   id: string;
@@ -50,24 +51,26 @@ const AdminTestsManager = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "tests" },
         (payload) => {
-          setTests(prev => {
+          setTests((prev) => {
             let arr: Test[] = [...prev];
             if (payload.eventType === "INSERT")
               arr = [payload.new as Test, ...arr];
             else if (payload.eventType === "UPDATE")
-              arr = arr.map(t => t.id === payload.new.id ? payload.new as Test : t);
+              arr = arr.map((t) => (t.id === payload.new.id ? payload.new as Test : t));
             else if (payload.eventType === "DELETE")
-              arr = arr.filter(t => t.id !== payload.old.id);
+              arr = arr.filter((t) => t.id !== payload.old.id);
             return arr;
           });
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,8 +84,19 @@ const AdminTestsManager = () => {
     });
     if (!error) {
       setForm({ name: "", description: "", cost: "", lab_id: "" });
+      toast.success("Test added successfully!");
     } else {
-      alert("Error adding test: " + error.message);
+      toast.error("Error adding test: " + error.message);
+    }
+  };
+
+  const handleDelete = async (testId: string, testName: string) => {
+    if (!window.confirm(`Are you sure you want to delete test "${testName}"?`)) return;
+    const { error } = await supabase.from("tests").delete().eq("id", testId);
+    if (!error) {
+      toast.success("Test deleted.");
+    } else {
+      toast.error("Failed to delete test.");
     }
   };
 
@@ -120,8 +134,10 @@ const AdminTestsManager = () => {
             className="border rounded px-2 py-1 text-sm"
           >
             <option value="">Select Lab (optional)</option>
-            {labs.map(lab => (
-              <option value={lab.id} key={lab.id}>{lab.name}</option>
+            {labs.map((lab) => (
+              <option value={lab.id} key={lab.id}>
+                {lab.name}
+              </option>
             ))}
           </select>
           <Button type="submit">Add Test</Button>
@@ -133,13 +149,24 @@ const AdminTestsManager = () => {
           <div>Loading...</div>
         ) : (
           <div className="space-y-2">
-            {tests.map(test => (
-              <Card key={test.id} className="p-2">
-                <div className="font-bold">{test.name}</div>
-                <div className="text-xs">{test.description}</div>
-                <div className="text-xs">Cost: ₹{test.cost}</div>
-                <div className="text-xs">
-                  Lab: {labs.find(l => l.id === test.lab_id)?.name || "Unassigned"}
+            {tests.map((test) => (
+              <Card key={test.id} className="p-2 flex items-start justify-between">
+                <div>
+                  <div className="font-bold">{test.name}</div>
+                  <div className="text-xs">{test.description}</div>
+                  <div className="text-xs">Cost: ₹{test.cost}</div>
+                  <div className="text-xs">
+                    Lab: {labs.find((l) => l.id === test.lab_id)?.name || "Unassigned"}
+                  </div>
+                </div>
+                <div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(test.id, test.name)}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </Card>
             ))}

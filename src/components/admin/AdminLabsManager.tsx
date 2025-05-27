@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface Lab {
   id: string;
@@ -35,6 +36,7 @@ const AdminLabsManager = () => {
         setLabs(data || []);
         setLoading(false);
       });
+
     // Realtime updates
     const channel = supabase
       .channel("labs-admin-rt")
@@ -42,24 +44,26 @@ const AdminLabsManager = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "labs" },
         (payload) => {
-          setLabs(prev => {
+          setLabs((prev) => {
             let arr: Lab[] = [...prev];
             if (payload.eventType === "INSERT")
               arr = [payload.new as Lab, ...arr];
             else if (payload.eventType === "UPDATE")
-              arr = arr.map(l => l.id === payload.new.id ? payload.new as Lab : l);
+              arr = arr.map((l) => (l.id === payload.new.id ? payload.new as Lab : l));
             else if (payload.eventType === "DELETE")
-              arr = arr.filter(l => l.id !== payload.old.id);
+              arr = arr.filter((l) => l.id !== payload.old.id);
             return arr;
           });
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,8 +78,19 @@ const AdminLabsManager = () => {
     });
     if (!error) {
       setForm({ name: "", address: "", phone: "", rating: "", hours: "" });
+      toast.success("Lab added successfully!");
     } else {
-      alert("Error adding lab: " + error.message);
+      toast.error("Error adding lab: " + error.message);
+    }
+  };
+
+  const handleDelete = async (labId: string, labName: string) => {
+    if (!window.confirm(`Are you sure you want to delete lab "${labName}"?`)) return;
+    const { error } = await supabase.from("labs").delete().eq("id", labId);
+    if (!error) {
+      toast.success("Lab deleted.");
+    } else {
+      toast.error("Failed to delete lab.");
     }
   };
 
@@ -128,13 +143,24 @@ const AdminLabsManager = () => {
           <div>Loading...</div>
         ) : (
           <div className="space-y-2">
-            {labs.map(lab => (
-              <Card key={lab.id} className="p-2">
-                <div className="font-bold">{lab.name}</div>
-                <div className="text-xs text-muted-foreground">{lab.address}</div>
-                <div className="text-xs">{lab.phone}</div>
-                <div className="text-xs">Rating: {lab.rating ?? "—"} / 5</div>
-                <div className="text-xs">Hours: {lab.hours ?? "—"}</div>
+            {labs.map((lab) => (
+              <Card key={lab.id} className="p-2 flex items-start justify-between">
+                <div>
+                  <div className="font-bold">{lab.name}</div>
+                  <div className="text-xs text-muted-foreground">{lab.address}</div>
+                  <div className="text-xs">{lab.phone}</div>
+                  <div className="text-xs">Rating: {lab.rating ?? "—"} / 5</div>
+                  <div className="text-xs">Hours: {lab.hours ?? "—"}</div>
+                </div>
+                <div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(lab.id, lab.name)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>
