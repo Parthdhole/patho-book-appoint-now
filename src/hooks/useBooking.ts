@@ -114,7 +114,7 @@ export const useBooking = () => {
   };
 
   const getUserBookings = async (): Promise<Booking[]> => {
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const { data: session } = await supabase.auth.getSession();
