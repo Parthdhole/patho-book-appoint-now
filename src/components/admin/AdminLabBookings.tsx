@@ -26,6 +26,7 @@ interface BookingWithLab {
   status: string;
   paymentStatus: string;
   createdAt: string;
+  userId: string;
 }
 
 const AdminLabBookings = () => {
@@ -35,6 +36,7 @@ const AdminLabBookings = () => {
   const [selectedTab, setSelectedTab] = useState("all");
 
   const loadData = async () => {
+    console.log("Loading admin bookings data...");
     setLoading(true);
     
     // Load all labs
@@ -46,10 +48,11 @@ const AdminLabBookings = () => {
     if (labsError) {
       console.error("Error loading labs:", labsError);
     } else {
+      console.log("Loaded labs:", labsData?.length);
       setLabs(labsData || []);
     }
 
-    // Load all bookings
+    // Load ALL bookings (not filtered by user)
     const { data: bookingsData, error: bookingsError } = await supabase
       .from("bookings")
       .select("*")
@@ -58,6 +61,7 @@ const AdminLabBookings = () => {
     if (bookingsError) {
       console.error("Error loading bookings:", bookingsError);
     } else {
+      console.log("Loaded bookings:", bookingsData?.length);
       const mappedBookings = (bookingsData || []).map((b: any) => ({
         id: b.id,
         testName: b.test_name,
@@ -71,6 +75,7 @@ const AdminLabBookings = () => {
         status: b.status,
         paymentStatus: b.payment_status,
         createdAt: b.created_at,
+        userId: b.user_id,
       }));
       setBookings(mappedBookings);
     }
@@ -81,14 +86,24 @@ const AdminLabBookings = () => {
   useEffect(() => {
     loadData();
     
-    // Set up real-time subscriptions
+    // Set up real-time subscriptions for immediate updates
     const channel = supabase
-      .channel("admin-lab-bookings")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        loadData();
+      .channel("admin-all-bookings-realtime")
+      .on("postgres_changes", { 
+        event: "*", 
+        schema: "public", 
+        table: "bookings" 
+      }, (payload) => {
+        console.log("Real-time booking update:", payload);
+        loadData(); // Reload all data when any booking changes
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "labs" }, () => {
-        loadData();
+      .on("postgres_changes", { 
+        event: "*", 
+        schema: "public", 
+        table: "labs" 
+      }, (payload) => {
+        console.log("Real-time lab update:", payload);
+        loadData(); // Reload all data when any lab changes
       })
       .subscribe();
 
@@ -98,6 +113,8 @@ const AdminLabBookings = () => {
   }, []);
 
   const handleStatusChange = async (bookingId: string, newStatus: "confirmed" | "cancelled") => {
+    console.log(`Updating booking ${bookingId} to status: ${newStatus}`);
+    
     const { error } = await supabase
       .from("bookings")
       .update({ status: newStatus })
@@ -105,7 +122,9 @@ const AdminLabBookings = () => {
     
     if (!error) {
       toast.success(`Booking ${newStatus === "confirmed" ? "confirmed" : "cancelled"} successfully`);
+      // Data will be automatically updated via real-time subscription
     } else {
+      console.error("Error updating booking:", error);
       toast.error(`Failed to ${newStatus === "confirmed" ? "confirm" : "cancel"} booking`);
     }
   };
@@ -129,22 +148,29 @@ const AdminLabBookings = () => {
     return status === "pending" ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800";
   };
 
-  if (loading) return <div className="p-4">Loading labs and bookings...</div>;
+  if (loading) return <div className="p-4">Loading all bookings...</div>;
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">All User Bookings</h2>
+        <div className="text-sm text-gray-600">
+          Total: {bookings.length} bookings
+        </div>
+      </div>
+
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="all">All Bookings</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({bookings.filter(b => b.status === "pending").length})</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmed ({bookings.filter(b => b.status === "confirmed").length})</TabsTrigger>
           <TabsTrigger value="labs">By Lab</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>All Bookings ({bookings.length})</CardTitle>
+              <CardTitle>All User Bookings ({bookings.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <BookingTable 
@@ -258,57 +284,65 @@ const BookingTable: React.FC<BookingTableProps> = ({
   getPaymentStatusColor 
 }) => {
   if (bookings.length === 0) {
-    return <div className="text-center py-4 text-gray-500">No bookings found</div>;
+    return <div className="text-center py-8 text-gray-500">No bookings found</div>;
   }
 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="border-b">
-            <th className="p-2 text-left">Test</th>
-            <th className="p-2 text-left">Lab</th>
-            <th className="p-2 text-left">Date</th>
-            <th className="p-2 text-left">Time</th>
-            <th className="p-2 text-left">Patient</th>
-            <th className="p-2 text-left">Contact</th>
-            <th className="p-2 text-left">Status</th>
-            <th className="p-2 text-left">Payment</th>
-            <th className="p-2 text-center">Actions</th>
+          <tr className="border-b bg-gray-50">
+            <th className="p-3 text-left font-semibold">Test</th>
+            <th className="p-3 text-left font-semibold">Lab</th>
+            <th className="p-3 text-left font-semibold">Date & Time</th>
+            <th className="p-3 text-left font-semibold">Patient</th>
+            <th className="p-3 text-left font-semibold">Contact</th>
+            <th className="p-3 text-left font-semibold">Status</th>
+            <th className="p-3 text-left font-semibold">Payment</th>
+            <th className="p-3 text-center font-semibold">Actions</th>
           </tr>
         </thead>
         <tbody>
           {bookings.map((booking) => (
-            <tr key={booking.id} className="border-b hover:bg-gray-50">
-              <td className="p-2">{booking.testName}</td>
-              <td className="p-2">{booking.labName || "Home Collection"}</td>
-              <td className="p-2">{new Date(booking.appointmentDate).toLocaleDateString()}</td>
-              <td className="p-2">{booking.appointmentTime}</td>
-              <td className="p-2">{booking.patientName}</td>
-              <td className="p-2">
-                <div className="text-xs">
-                  <div>{booking.patientPhone}</div>
+            <tr key={booking.id} className="border-b hover:bg-gray-50 transition-colors">
+              <td className="p-3 font-medium">{booking.testName}</td>
+              <td className="p-3">{booking.labName || "Home Collection"}</td>
+              <td className="p-3">
+                <div>
+                  <div className="font-medium">{new Date(booking.appointmentDate).toLocaleDateString()}</div>
+                  <div className="text-gray-600 text-xs">{booking.appointmentTime}</div>
+                </div>
+              </td>
+              <td className="p-3">
+                <div>
+                  <div className="font-medium">{booking.patientName}</div>
+                  <div className="text-gray-600 text-xs">Age: {booking.patientAge || 'N/A'}</div>
+                </div>
+              </td>
+              <td className="p-3">
+                <div className="text-xs space-y-1">
+                  <div className="font-medium">{booking.patientPhone}</div>
                   <div className="text-gray-500">{booking.patientEmail}</div>
                 </div>
               </td>
-              <td className="p-2">
-                <span className={`px-2 py-1 rounded text-xs ${getStatusColor(booking.status)}`}>
-                  {booking.status}
+              <td className="p-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                  {booking.status.toUpperCase()}
                 </span>
               </td>
-              <td className="p-2">
-                <span className={`px-2 py-1 rounded text-xs ${getPaymentStatusColor(booking.paymentStatus)}`}>
-                  {booking.paymentStatus}
+              <td className="p-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                  {booking.paymentStatus.toUpperCase()}
                 </span>
               </td>
-              <td className="p-2">
-                <div className="flex gap-1 justify-center">
+              <td className="p-3">
+                <div className="flex gap-2 justify-center">
                   {booking.status === "pending" && (
                     <Button 
                       size="sm" 
                       variant="default" 
                       onClick={() => onStatusChange(booking.id, "confirmed")}
-                      className="text-xs px-2"
+                      className="text-xs px-3 py-1"
                     >
                       Confirm
                     </Button>
@@ -318,9 +352,19 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       size="sm" 
                       variant="destructive" 
                       onClick={() => onStatusChange(booking.id, "cancelled")}
-                      className="text-xs px-2"
+                      className="text-xs px-3 py-1"
                     >
                       Cancel
+                    </Button>
+                  )}
+                  {booking.status === "confirmed" && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => onStatusChange(booking.id, "completed")}
+                      className="text-xs px-3 py-1"
+                    >
+                      Complete
                     </Button>
                   )}
                 </div>

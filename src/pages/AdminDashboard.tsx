@@ -31,9 +31,8 @@ export default function AdminDashboard() {
       <AdminCardStats />
       
       <div className="mt-8 space-y-8">
-        {/* Comprehensive Booking Management */}
+        {/* Real-time Booking Management - Most Important */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Booking Management</h2>
           <AdminLabBookings />
         </div>
 
