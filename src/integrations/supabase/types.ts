@@ -102,6 +102,42 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          lab_name: string
+          owner_name: string
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          lab_name: string
+          owner_name: string
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          lab_name?: string
+          owner_name?: string
+          phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null

@@ -11,7 +11,9 @@ interface BookingAdmin {
   appointmentDate: string;
   appointmentTime: string;
   patientName: string;
+  patientPhone: string;
   status: string;
+  paymentStatus: string;
 }
 
 const BookingsTableAdmin = () => {
@@ -22,9 +24,9 @@ const BookingsTableAdmin = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("bookings")
-      .select("id, test_name, lab_name, appointment_date, appointment_time, patient_name, status")
+      .select("id, test_name, lab_name, appointment_date, appointment_time, patient_name, patient_phone, status, payment_status")
       .order("created_at", { ascending: false })
-      .limit(15);
+      .limit(20);
 
     if (!error && data) {
       setBookings(data.map((b: any) => ({
@@ -34,7 +36,9 @@ const BookingsTableAdmin = () => {
         appointmentDate: b.appointment_date,
         appointmentTime: b.appointment_time,
         patientName: b.patient_name,
+        patientPhone: b.patient_phone,
         status: b.status,
+        paymentStatus: b.payment_status,
       })));
     }
     setLoading(false);
@@ -53,13 +57,17 @@ const BookingsTableAdmin = () => {
     };
   }, []);
 
-  const handleCancel = async (id: string) => {
+  const handleStatusChange = async (id: string, newStatus: "confirmed" | "cancelled") => {
     const { error } = await supabase
       .from("bookings")
-      .update({ status: "cancelled" })
+      .update({ status: newStatus })
       .eq("id", id);
-    if (!error) toast.success("Booking cancelled");
-    else toast.error("Failed to cancel booking");
+    
+    if (!error) {
+      toast.success(`Booking ${newStatus === "confirmed" ? "confirmed" : "cancelled"} successfully`);
+    } else {
+      toast.error(`Failed to ${newStatus === "confirmed" ? "confirm" : "cancel"} booking`);
+    }
   };
 
   if (loading) return <div>Loading bookings...</div>;
@@ -72,21 +80,24 @@ const BookingsTableAdmin = () => {
           <tr>
             <th className="p-2 text-left">Test Name</th>
             <th className="p-2 text-left">Lab</th>
-            <th className="p-2">Date</th>
-            <th className="p-2">Time</th>
-            <th className="p-2">Patient</th>
-            <th className="p-2">Status</th>
-            <th className="p-2"></th>
+            <th className="p-2 text-left">Date</th>
+            <th className="p-2 text-left">Time</th>
+            <th className="p-2 text-left">Patient</th>
+            <th className="p-2 text-left">Phone</th>
+            <th className="p-2 text-left">Status</th>
+            <th className="p-2 text-left">Payment</th>
+            <th className="p-2 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {bookings.map((b) => (
-            <tr key={b.id}>
+            <tr key={b.id} className="border-b">
               <td className="p-2">{b.testName}</td>
               <td className="p-2">{b.labName || "N/A"}</td>
               <td className="p-2">{new Date(b.appointmentDate).toLocaleDateString()}</td>
               <td className="p-2">{b.appointmentTime}</td>
               <td className="p-2">{b.patientName}</td>
+              <td className="p-2">{b.patientPhone}</td>
               <td className="p-2 text-xs">
                 <span className={"px-2 py-1 rounded " +
                   (b.status === "pending" ? "bg-yellow-100 text-yellow-800"
@@ -96,12 +107,36 @@ const BookingsTableAdmin = () => {
                   {b.status}
                 </span>
               </td>
+              <td className="p-2 text-xs">
+                <span className={"px-2 py-1 rounded " +
+                  (b.paymentStatus === "pending" ? "bg-orange-100 text-orange-800"
+                  : "bg-green-100 text-green-800")}>
+                  {b.paymentStatus}
+                </span>
+              </td>
               <td className="p-2">
-                {b.status !== "cancelled" && (
-                  <Button size="sm" variant="outline" onClick={() => handleCancel(b.id)}>
-                    Cancel
-                  </Button>
-                )}
+                <div className="flex gap-1">
+                  {b.status === "pending" && (
+                    <Button 
+                      size="sm" 
+                      variant="default" 
+                      onClick={() => handleStatusChange(b.id, "confirmed")}
+                      className="text-xs"
+                    >
+                      Confirm
+                    </Button>
+                  )}
+                  {(b.status === "pending" || b.status === "confirmed") && (
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      onClick={() => handleStatusChange(b.id, "cancelled")}
+                      className="text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

@@ -1,12 +1,10 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingFormData, Booking } from '@/types/booking';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
-// The table is now named `bookings` in supabase, so we'll reference that in all API calls!
-
-// Add a utility to map supabase booking row to app Booking type
 function mapBookingRow(row: any): Booking {
   return {
     id: row.id,
@@ -83,7 +81,18 @@ export const useBooking = () => {
         .select()
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a unique constraint violation
+        if (error.code === '23505' && error.message.includes('unique_user_appointment')) {
+          toast({
+            title: "Booking Conflict",
+            description: "You already have a booking at this date and time. Please choose a different time slot.",
+            variant: "destructive",
+          });
+          return null;
+        }
+        throw error;
+      }
 
       toast({
         title: "Booking Successful",
@@ -105,7 +114,7 @@ export const useBooking = () => {
   };
 
   const getUserBookings = async (): Promise<Booking[]> => {
-    setIsLoading(true);
+    setLoading(true);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -133,8 +142,6 @@ export const useBooking = () => {
       setIsLoading(false);
     }
   };
-
-  // You can add real-time support using the custom hook below!
 
   return {
     createBooking,

@@ -5,21 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
-// The project does not have partner_applications table in Supabase types,
-// so use a safe casting approach and guard the fetch against errors.
 interface PartnerApplication {
   id: string;
   lab_name: string;
   owner_name: string;
   email: string;
-  phone: string;
-  address: string;
-  city: string;
-  certifications?: string;
-  message?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
   status: string;
   created_at: string;
-  updated_at?: string;
 }
 
 const PartnerApplications = () => {
@@ -28,34 +23,22 @@ const PartnerApplications = () => {
 
   useEffect(() => {
     setLoading(true);
-    // We suppress TS errors because partner_applications is not in the supabase types
+    // Use the correct table name from the database
     supabase
-      .from("partner_applications" as any)
+      .from("partner_applications")
       .select("*")
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (Array.isArray(data)) {
-          setApplications(
-            data.filter(row =>
-              row &&
-              typeof row.id === "string" &&
-              typeof row.lab_name === "string" &&
-              typeof row.owner_name === "string" &&
-              typeof row.email === "string" &&
-              typeof row.phone === "string" &&
-              typeof row.address === "string" &&
-              typeof row.city === "string" &&
-              typeof row.status === "string" &&
-              typeof row.created_at === "string"
-            ) as PartnerApplication[]
-          );
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setApplications(data as PartnerApplication[]);
         } else {
+          console.error("Error fetching partner applications:", error);
           setApplications([]);
         }
         setLoading(false);
       });
 
-    // Real-time subscription — fix for async cleanup and ensure correct table
+    // Real-time subscription
     const channel = supabase
       .channel("partner-apps-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "partner_applications" }, (payload) => {
@@ -77,7 +60,7 @@ const PartnerApplications = () => {
 
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
     const { error } = await supabase
-      .from("partner_applications" as any)
+      .from("partner_applications")
       .update({ status })
       .eq("id", id);
     if (!error) {
@@ -98,10 +81,8 @@ const PartnerApplications = () => {
             <div className="font-bold">{app.lab_name}</div>
             <div className="text-gray-500 text-sm">Owner: {app.owner_name}</div>
             <div className="text-xs mt-1">Email: {app.email}</div>
-            <div className="text-xs">Phone: {app.phone}</div>
-            <div className="text-xs">City: {app.city}</div>
-            {!!app.certifications && <div className="text-xs">Certifications: {app.certifications}</div>}
-            {!!app.message && <div className="text-xs">Message: {app.message}</div>}
+            <div className="text-xs">Phone: {app.phone || "N/A"}</div>
+            <div className="text-xs">City: {app.city || "N/A"}</div>
             <div className={"inline-block text-xs px-2 py-1 rounded " + (app.status === "pending"
               ? "bg-yellow-100 text-yellow-800"
               : app.status === "approved"
