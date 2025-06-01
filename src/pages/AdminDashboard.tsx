@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useNavigate } from "react-router-dom";
 import AdminCardStats from "@/components/admin/AdminCardStats";
 import PartnerApplications from "@/components/admin/PartnerApplications";
-import BookingsTableAdmin from "@/components/admin/BookingsTableAdmin";
+import AdminLabBookings from "@/components/admin/AdminLabBookings";
 import AdminLabsManager from "@/components/admin/AdminLabsManager";
 import AdminTestsManager from "@/components/admin/AdminTestsManager";
 
@@ -24,24 +25,37 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto mt-8 pb-16 px-4">
-      <h1 className="text-3xl font-bold mb-3">Admin Dashboard</h1>
+    <div className="max-w-7xl mx-auto mt-8 pb-16 px-4">
+      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      
       <AdminCardStats />
-      <div className="grid md:grid-cols-2 gap-8 mt-6">
+      
+      <div className="mt-8 space-y-8">
+        {/* Comprehensive Booking Management */}
         <div>
-          <h2 className="text-xl font-semibold mb-3">Partner Applications</h2>
-          <PartnerApplications />
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-3">Manage Labs</h2>
-            <AdminLabsManager />
-          </div>
+          <h2 className="text-2xl font-semibold mb-4">Booking Management</h2>
+          <AdminLabBookings />
         </div>
-        <div>
-          <h2 className="text-xl font-semibold mb-3">Recent Bookings</h2>
-          <BookingsTableAdmin />
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-3">Manage Tests</h2>
-            <AdminTestsManager />
+
+        {/* Two column layout for other admin functions */}
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Partner Applications</h2>
+              <PartnerApplications />
+            </div>
+            
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Manage Labs</h2>
+              <AdminLabsManager />
+            </div>
+          </div>
+          
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Manage Tests</h2>
+              <AdminTestsManager />
+            </div>
           </div>
         </div>
       </div>
