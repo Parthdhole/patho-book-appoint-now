@@ -21,6 +21,7 @@ interface BookingWithLab {
   appointmentDate: string;
   appointmentTime: string;
   patientName: string;
+  patientAge?: number;
   patientPhone: string;
   patientEmail: string;
   status: string;
@@ -70,6 +71,7 @@ const AdminLabBookings = () => {
         appointmentDate: b.appointment_date,
         appointmentTime: b.appointment_time,
         patientName: b.patient_name,
+        patientAge: b.patient_age,
         patientPhone: b.patient_phone,
         patientEmail: b.patient_email,
         status: b.status,
@@ -112,7 +114,7 @@ const AdminLabBookings = () => {
     };
   }, []);
 
-  const handleStatusChange = async (bookingId: string, newStatus: "confirmed" | "cancelled") => {
+  const handleStatusChange = async (bookingId: string, newStatus: "confirmed" | "cancelled" | "completed") => {
     console.log(`Updating booking ${bookingId} to status: ${newStatus}`);
     
     const { error } = await supabase
@@ -121,11 +123,11 @@ const AdminLabBookings = () => {
       .eq("id", bookingId);
     
     if (!error) {
-      toast.success(`Booking ${newStatus === "confirmed" ? "confirmed" : "cancelled"} successfully`);
+      toast.success(`Booking ${newStatus === "confirmed" ? "confirmed" : newStatus === "completed" ? "completed" : "cancelled"} successfully`);
       // Data will be automatically updated via real-time subscription
     } else {
       console.error("Error updating booking:", error);
-      toast.error(`Failed to ${newStatus === "confirmed" ? "confirm" : "cancel"} booking`);
+      toast.error(`Failed to ${newStatus} booking`);
     }
   };
 
@@ -272,7 +274,7 @@ const AdminLabBookings = () => {
 
 interface BookingTableProps {
   bookings: BookingWithLab[];
-  onStatusChange: (id: string, status: "confirmed" | "cancelled") => void;
+  onStatusChange: (id: string, status: "confirmed" | "cancelled" | "completed") => void;
   getStatusColor: (status: string) => string;
   getPaymentStatusColor: (status: string) => string;
 }

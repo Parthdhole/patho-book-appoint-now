@@ -9,21 +9,36 @@ const AdminCardStats = () => {
   const [bookingCount, setBookingCount] = useState(0);
 
   useEffect(() => {
-    setLabCount(6); // Demo count
-    setTestCount(14); // Demo count
+    const fetchStats = async () => {
+      // Fetch real lab count
+      const { count: labsCount } = await supabase
+        .from("labs")
+        .select("id", { count: "exact", head: true });
+      setLabCount(labsCount || 0);
 
-    const fetchBookings = async () => {
-      const { count } = await supabase
+      // Fetch real test count
+      const { count: testsCount } = await supabase
+        .from("tests")
+        .select("id", { count: "exact", head: true });
+      setTestCount(testsCount || 0);
+
+      // Fetch real booking count
+      const { count: bookingsCount } = await supabase
         .from("bookings")
         .select("id", { count: "exact", head: true });
-      setBookingCount(count || 0);
+      setBookingCount(bookingsCount || 0);
     };
-    fetchBookings();
 
+    fetchStats();
+
+    // Set up real-time subscriptions for stats updates
     const channel = supabase
       .channel("admin-stats")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, fetchBookings)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "labs" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tests" }, fetchStats)
       .subscribe();
+      
     return () => {
       supabase.removeChannel(channel);
     };
