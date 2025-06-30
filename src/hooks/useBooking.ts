@@ -56,10 +56,10 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
-      // Insert booking
+      // Insert single booking object (not array)
       const { data, error } = await supabase
         .from('bookings')
-        .insert([{
+        .insert({
           user_id: userId,
           test_id: bookingData.testId,
           test_name: bookingData.testName,
@@ -77,7 +77,7 @@ export const useBooking = () => {
           status: bookingData.status,
           payment_status: bookingData.paymentStatus,
           created_at: new Date().toISOString(),
-        }])
+        })
         .select()
         .maybeSingle();
 

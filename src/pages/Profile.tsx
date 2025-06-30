@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Clock, Calendar, FileText, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -430,6 +429,7 @@ const Profile = () => {
             </div>
           </TabsContent>
 
+          
           <TabsContent value="bookings">
             <Card>
               <CardHeader>
