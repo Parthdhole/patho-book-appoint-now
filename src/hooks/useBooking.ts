@@ -56,7 +56,7 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
-      // Insert single booking object (not array)
+      // Insert single booking object with correct field names
       const { data, error } = await supabase
         .from('bookings')
         .insert({
@@ -76,7 +76,6 @@ export const useBooking = () => {
           address: bookingData.address ?? null,
           status: bookingData.status,
           payment_status: bookingData.paymentStatus,
-          created_at: new Date().toISOString(),
         })
         .select()
         .single();
