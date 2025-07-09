@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
+import LocationDetector from '@/components/LocationDetector';
 
 // Mock lab data (reuse structure from Labs)
 const homeLabs = [
@@ -61,8 +62,8 @@ const Home = () => {
     });
   };
 
-  const detectLocation = () => {
-    setLocation('Current Location');
+  const handleLocationDetected = (detectedLocation: string) => {
+    setLocation(detectedLocation);
   };
 
   return (
@@ -87,14 +88,10 @@ const Home = () => {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 />
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="absolute right-2 top-1.5 text-patho-primary text-xs"
-                  onClick={detectLocation}
-                >
-                  Detect
-                </Button>
+                <LocationDetector
+                  onLocationDetected={handleLocationDetected}
+                  className="absolute right-2 top-1.5"
+                />
               </div>
               
               <div className="relative">

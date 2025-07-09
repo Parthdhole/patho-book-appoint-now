@@ -3,6 +3,7 @@ import { MapPin, Search, HomeIcon, Building2, Star, Filter, List, Grid3X3, MapPi
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLocation, useNavigate } from 'react-router-dom';
+import LocationDetector from '@/components/LocationDetector';
 
 // Mock data for labs
 const mockLabs = [
@@ -63,7 +64,7 @@ const Labs = () => {
   
   const [locationQuery, setLocationQuery] = useState(initialState.location || '');
   const [searchQuery, setSearchQuery] = useState(initialState.query || '');
-  const [viewType, setViewType] = useState('list'); // 'list', 'grid', or 'map'
+  const [viewType, setViewType] = useState('list');
   const [sortBy, setSortBy] = useState('relevance');
   const [labs, setLabs] = useState(mockLabs);
   const [selectedLab, setSelectedLab] = useState<any | null>(null);
@@ -74,6 +75,10 @@ const Labs = () => {
 
   const handleSelectLab = (lab: any) => {
     setSelectedLab(lab);
+  };
+
+  const handleLocationDetected = (detectedLocation: string) => {
+    setLocationQuery(detectedLocation);
   };
 
   return (
@@ -88,6 +93,10 @@ const Labs = () => {
               className="pl-10"
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
+            />
+            <LocationDetector
+              onLocationDetected={handleLocationDetected}
+              className="absolute right-2 top-1.5"
             />
           </div>
           

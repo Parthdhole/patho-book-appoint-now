@@ -79,7 +79,7 @@ export const useBooking = () => {
           created_at: new Date().toISOString(),
         })
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) {
         // Check if it's a unique constraint violation
@@ -94,9 +94,29 @@ export const useBooking = () => {
         throw error;
       }
 
+      // Send confirmation email
+      try {
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: {
+            bookingId: data.id,
+            patientName: bookingData.patientName,
+            patientEmail: bookingData.patientEmail,
+            testName: bookingData.testName,
+            appointmentDate: appointmentDate,
+            appointmentTime: bookingData.appointmentTime,
+            labName: bookingData.labName,
+            sampleType: bookingData.sampleType,
+            address: bookingData.address
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the booking if email fails
+      }
+
       toast({
         title: "Booking Successful",
-        description: "Your appointment has been booked successfully",
+        description: "Your appointment has been booked successfully. A confirmation email has been sent.",
       });
 
       return data ? data : null;
