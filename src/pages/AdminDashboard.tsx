@@ -9,6 +9,9 @@ import AdminLabsManager from "@/components/admin/AdminLabsManager";
 import AdminTestsManager from "@/components/admin/AdminTestsManager";
 import AdminUsersManager from "@/components/admin/AdminUsersManager";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import AdminReports from "@/components/admin/AdminReports";
+import AdminSettings from "@/components/admin/AdminSettings";
+import AdminNotifications from "@/components/admin/AdminNotifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {
@@ -32,13 +35,16 @@ export default function AdminDashboard() {
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
       
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="labs">Labs</TabsTrigger>
           <TabsTrigger value="tests">Tests</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="notifications">Alerts</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -64,6 +70,18 @@ export default function AdminDashboard() {
 
         <TabsContent value="partners" className="space-y-6">
           <PartnerApplications />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <AdminReports />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <AdminNotifications />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <AdminSettings />
         </TabsContent>
       </Tabs>
     </div>
