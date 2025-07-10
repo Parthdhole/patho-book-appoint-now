@@ -61,9 +61,9 @@ export const useBooking = () => {
         .from('bookings')
         .insert({
           user_id: userId,
-          test_id: bookingData.testId,
+          test_id: bookingData.testId.toString(),
           test_name: bookingData.testName,
-          lab_id: bookingData.labId ?? null,
+          lab_id: bookingData.labId?.toString() ?? null,
           lab_name: bookingData.labName ?? null,
           appointment_date: appointmentDate,
           appointment_time: bookingData.appointmentTime,
