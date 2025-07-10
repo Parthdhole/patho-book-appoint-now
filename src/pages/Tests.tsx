@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Clock, Droplet, CalendarClock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const mockTests = [
   {
@@ -17,7 +17,7 @@ const mockTests = [
     fasting: "8-10 hours",
     reportTime: "Same Day",
     isPopular: true,
-    availableAt: [101, 102, 103] // Lab IDs where this test is available
+    availableAt: [1, 2, 3] // Lab IDs where this test is available
   },
   {
     id: 2,
@@ -30,7 +30,7 @@ const mockTests = [
     fasting: "12 hours",
     reportTime: "Same Day",
     isPopular: true,
-    availableAt: [101, 103]
+    availableAt: [1, 3]
   },
   {
     id: 3,
@@ -43,7 +43,7 @@ const mockTests = [
     fasting: "Not required",
     reportTime: "Next Day",
     isPopular: false,
-    availableAt: [101, 102]
+    availableAt: [1, 2]
   },
   {
     id: 4,
@@ -56,7 +56,7 @@ const mockTests = [
     fasting: "Not required",
     reportTime: "Next Day",
     isPopular: false,
-    availableAt: [102, 103]
+    availableAt: [2, 3]
   },
   {
     id: 5,
@@ -69,7 +69,7 @@ const mockTests = [
     fasting: "Not required",
     reportTime: "Same Day",
     isPopular: true,
-    availableAt: [101, 102, 103]
+    availableAt: [1, 2, 3]
   },
   {
     id: 6,
@@ -82,7 +82,7 @@ const mockTests = [
     fasting: "8 hours",
     reportTime: "Same Day",
     isPopular: false,
-    availableAt: [101, 103]
+    availableAt: [1, 3]
   },
   {
     id: 7,
@@ -95,7 +95,7 @@ const mockTests = [
     fasting: "8 hours",
     reportTime: "Same Day",
     isPopular: false,
-    availableAt: [102, 103]
+    availableAt: [2, 3]
   },
   {
     id: 8,
@@ -108,38 +108,47 @@ const mockTests = [
     fasting: "Not required",
     reportTime: "24-48 hours",
     isPopular: true,
-    availableAt: [101, 102, 103]
+    availableAt: [1, 2, 3]
   }
 ];
 
-// Mock labs data
+// Mock labs data with matching names from Labs page
 const mockLabs = [
   {
-    id: 101,
-    name: "City Lab Diagnostics",
-    address: "123 Main Street, Mumbai, Maharashtra 400001",
+    id: 1,
+    name: "MedLab Diagnostics Centre",
+    address: "Aundh, Pune, Maharashtra 411017",
     phone: "+91-9000000001",
-    rating: 4.5,
-    timings: "Mon-Sat: 8am-8pm, Sun: 8am-2pm",
+    rating: 4.8,
+    timings: "7:00 AM - 9:00 PM",
     description: "NABL Accredited Lab with 20+ years experience in diagnostic testing.",
   },
   {
-    id: 102,
-    name: "Health First Labs",
-    address: "456 Park Avenue, Pune, Maharashtra 411001",
+    id: 2,
+    name: "Prime Health Laboratory",
+    address: "Baner, Pune, Maharashtra 411045",
     phone: "+91-9000000002",
-    rating: 4.1,
-    timings: "Mon-Sun: 7am-7pm",
+    rating: 4.7,
+    timings: "8:00 AM - 8:00 PM",
     description: "Modern diagnostic facilities with state-of-the-art equipment.",
   },
   {
-    id: 103,
-    name: "Apollo Diagnostic Centre",
-    address: "789 High Road, Delhi, NCR 110001",
+    id: 3,
+    name: "Apollo Diagnostic Center",
+    address: "Kothrud, Pune, Maharashtra 411038",
     phone: "+91-9000000003",
-    rating: 4.8,
-    timings: "Mon-Fri: 8am-8pm, Sat: 8am-4pm, Sun: Closed",
+    rating: 4.6,
+    timings: "7:30 AM - 8:30 PM",
     description: "Trusted for accuracy & reliability with nationwide presence.",
+  },
+  {
+    id: 4,
+    name: "Thyrocare Technologies",
+    address: "Shivaji Nagar, Pune, Maharashtra 411005",
+    phone: "+91-9000000004",
+    rating: 4.5,
+    timings: "8:00 AM - 7:00 PM",
+    description: "Affordable diagnostic solutions with quick results.",
   },
 ];
 
@@ -158,6 +167,7 @@ const Tests = () => {
   useEffect(() => {
     // Check if lab is selected from navigation state
     if (location.state?.selectedLab) {
+      console.log('Lab selected from navigation:', location.state.selectedLab);
       setSelectedLab(location.state.selectedLab);
       filterTestsByLab(location.state.selectedLab.id);
     } else {
@@ -167,11 +177,14 @@ const Tests = () => {
   }, [location.state]);
 
   const filterTestsByLab = (labId: number) => {
+    console.log('Filtering tests for lab ID:', labId);
     const availableTests = mockTests.filter(test => test.availableAt.includes(labId));
+    console.log('Available tests:', availableTests);
     setFilteredTests(availableTests);
   };
 
   const handleLabSelection = (lab: any) => {
+    console.log('Lab selected:', lab);
     setSelectedLab(lab);
     setShowLabSelector(false);
     filterTestsByLab(lab.id);
@@ -211,6 +224,7 @@ const Tests = () => {
       return;
     }
     
+    console.log('Booking test:', test, 'with lab:', selectedLab);
     navigate('/booking', { 
       state: { 
         testId: test.id,

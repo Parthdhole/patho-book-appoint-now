@@ -6,11 +6,11 @@ import { Input } from '@/components/ui/input';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LocationDetector from '@/components/LocationDetector';
 
-// Mock data for labs
+// Mock data for labs with distinct names
 const mockLabs = [
   {
     id: 1,
-    name: "1MG Diagnostics",
+    name: "MedLab Diagnostics Centre",
     address: "Aundh, Pune, Maharashtra 411017",
     distance: "1.2 km",
     rating: "4.8",
@@ -24,7 +24,7 @@ const mockLabs = [
   },
   {
     id: 2,
-    name: "Healthians",
+    name: "Prime Health Laboratory",
     address: "Baner, Pune, Maharashtra 411045",
     distance: "2.5 km",
     rating: "4.7",
@@ -38,7 +38,7 @@ const mockLabs = [
   },
   {
     id: 3,
-    name: "Apollo Diagnostics",
+    name: "Apollo Diagnostic Center",
     address: "Kothrud, Pune, Maharashtra 411038",
     distance: "3.7 km",
     rating: "4.6",
@@ -52,7 +52,7 @@ const mockLabs = [
   },
   {
     id: 4,
-    name: "Thyrocare",
+    name: "Thyrocare Technologies",
     address: "Shivaji Nagar, Pune, Maharashtra 411005",
     distance: "4.1 km",
     rating: "4.5",
@@ -82,6 +82,7 @@ const Labs = () => {
   };
 
   const handleSelectLab = (lab: any) => {
+    console.log('Lab selected:', lab);
     // Navigate to tests page with selected lab information
     navigate('/tests', { 
       state: { 

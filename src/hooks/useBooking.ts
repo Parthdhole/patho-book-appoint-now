@@ -58,29 +58,13 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
-      // Fetch lab details if labId is provided
-      let labDetails = null;
-      if (bookingData.labId) {
-        const { data: lab, error: labError } = await supabase
-          .from('labs')
-          .select('*')
-          .eq('id', bookingData.labId.toString())
-          .maybeSingle();
-
-        if (labError) {
-          console.error("Error fetching lab details:", labError);
-        } else {
-          labDetails = lab;
-        }
-      }
-
-      // Insert booking with correct database column names
+      // Insert booking with correct database column names - removed lab details fetch to avoid RLS recursion
       const insertData = {
         user_id: userId,
         test_id: bookingData.testId.toString(),
         test_name: bookingData.testName,
         lab_id: bookingData.labId?.toString() || null,
-        lab_name: labDetails?.name || bookingData.labName || null,
+        lab_name: bookingData.labName || null,
         appointment_date: appointmentDate,
         appointment_time: bookingData.appointmentTime,
         patient_name: bookingData.patientName,
@@ -129,7 +113,7 @@ export const useBooking = () => {
           testName: bookingData.testName,
           appointmentDate: appointmentDate,
           appointmentTime: bookingData.appointmentTime,
-          labName: labDetails?.name || bookingData.labName,
+          labName: bookingData.labName,
           sampleType: bookingData.sampleType,
           address: bookingData.address
         };
