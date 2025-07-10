@@ -30,11 +30,11 @@ export function useAdminRole() {
 
         console.log("Checking admin role for user:", user_id);
 
-        // Use RPC call to check user role
-        const { data, error } = await supabase.rpc('check_user_role', {
+        // Use RPC call to check user role with explicit typing
+        const { data, error } = await supabase.rpc('check_user_role' as any, {
           user_id: user_id,
           role_name: 'admin'
-        });
+        } as any);
 
         console.log("Role check result:", { data, error });
 

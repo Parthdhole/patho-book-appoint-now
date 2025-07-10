@@ -152,13 +152,13 @@ const Auth = () => {
 
       console.log("Checking admin role for user ID:", user_id);
 
-      // Try RPC call first
+      // Try RPC call first with explicit typing
       let isAdmin = false;
       try {
-        const { data: rpcResult, error: rpcError } = await supabase.rpc('check_user_role', {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('check_user_role' as any, {
           user_id: user_id,
           role_name: 'admin'
-        });
+        } as any);
 
         if (rpcError) {
           console.log("RPC call failed, trying direct query:", rpcError);
