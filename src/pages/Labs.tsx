@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MapPin, Search, HomeIcon, Building2, Star, Filter, List, Grid3X3, MapPinned } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,9 @@ const mockLabs = [
     hours: "7:00 AM - 9:00 PM",
     badges: ["NABL Certified", "ISO Certified", "Home Collection"],
     startingPrice: "₹499",
-    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png",
+    phone: "+91-9000000001",
+    description: "NABL Accredited Lab with 20+ years experience in diagnostic testing."
   },
   {
     id: 2,
@@ -29,7 +32,9 @@ const mockLabs = [
     hours: "8:00 AM - 8:00 PM",
     badges: ["NABL Certified", "Home Collection"],
     startingPrice: "₹599",
-    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png",
+    phone: "+91-9000000002",
+    description: "Modern diagnostic facilities with state-of-the-art equipment."
   },
   {
     id: 3,
@@ -41,7 +46,9 @@ const mockLabs = [
     hours: "7:30 AM - 8:30 PM",
     badges: ["ISO Certified", "Home Collection"],
     startingPrice: "₹549",
-    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png",
+    phone: "+91-9000000003",
+    description: "Trusted for accuracy & reliability with nationwide presence."
   },
   {
     id: 4,
@@ -53,7 +60,9 @@ const mockLabs = [
     hours: "8:00 AM - 7:00 PM",
     badges: ["NABL Certified", "ISO Certified"],
     startingPrice: "₹449",
-    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png"
+    image: "public/lovable-uploads/45e5178e-74bd-477f-a084-7e02310bb15a.png",
+    phone: "+91-9000000004",
+    description: "Affordable diagnostic solutions with quick results."
   }
 ];
 
@@ -67,14 +76,26 @@ const Labs = () => {
   const [viewType, setViewType] = useState('list');
   const [sortBy, setSortBy] = useState('relevance');
   const [labs, setLabs] = useState(mockLabs);
-  const [selectedLab, setSelectedLab] = useState<any | null>(null);
 
   const handleViewDetails = (labId: number) => {
     navigate(`/labs/${labId}`);
   };
 
   const handleSelectLab = (lab: any) => {
-    setSelectedLab(lab);
+    // Navigate to tests page with selected lab information
+    navigate('/tests', { 
+      state: { 
+        selectedLab: {
+          id: lab.id,
+          name: lab.name,
+          address: lab.address,
+          phone: lab.phone,
+          rating: lab.rating,
+          timings: lab.hours,
+          description: lab.description
+        }
+      } 
+    });
   };
 
   const handleLocationDetected = (detectedLocation: string) => {
@@ -223,6 +244,8 @@ const Labs = () => {
                         </span>
                       ))}
                     </div>
+                    
+                    <p className="text-gray-600 text-sm mb-4">{lab.description}</p>
                   </div>
                   
                   <div className="text-right mt-4 md:mt-0">
@@ -243,30 +266,11 @@ const Labs = () => {
                     className="flex-1 bg-patho-primary hover:bg-patho-secondary"
                     onClick={() => handleSelectLab(lab)}
                   >
-                    Select Lab
+                    Select Lab & View Tests
                   </Button>
                 </div>
               </div>
             </div>
-            {selectedLab && selectedLab.id === lab.id && (
-              <div className="mt-4 p-4 border-t bg-gray-50 rounded">
-                <h3 className="text-lg font-semibold mb-2">Lab Details</h3>
-                <div>
-                  <b>Name:</b> {selectedLab.name}<br />
-                  <b>Address:</b> {selectedLab.address}<br />
-                  <b>Phone:</b> {selectedLab.phone || "N/A"}<br />
-                  <b>Rating:</b> {selectedLab.rating}<br />
-                  <b>Hours:</b> {selectedLab.hours}<br />
-                  <b>Description:</b> {selectedLab.description || "N/A"}<br />
-                </div>
-                <Button
-                  className="mt-3 w-full bg-green-500 hover:bg-green-600"
-                  onClick={() => navigate('/booking', { state: { labId: selectedLab.id } })}
-                >
-                  Proceed to Book
-                </Button>
-              </div>
-            )}
           </div>
         ))}
       </div>

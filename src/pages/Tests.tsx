@@ -1,23 +1,23 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Clock, Droplet, CalendarClock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const mockTests = [
   {
     id: 1,
     name: "Complete Blood Count (CBC)",
-    category: "Blood Tests",
+    category: "Blood Tests", 
     description: "Measures different components of blood including red cells, white cells, and platelets",
     originalPrice: "₹499",
     discountedPrice: "₹399",
     sampleType: "Blood",
     fasting: "8-10 hours",
     reportTime: "Same Day",
-    isPopular: true
+    isPopular: true,
+    availableAt: [101, 102, 103] // Lab IDs where this test is available
   },
   {
     id: 2,
@@ -25,11 +25,12 @@ const mockTests = [
     category: "Blood Tests",
     description: "Measures cholesterol, triglycerides, and lipoproteins to assess heart disease risk",
     originalPrice: "₹799",
-    discountedPrice: "₹599",
+    discountedPrice: "₹599", 
     sampleType: "Blood",
     fasting: "12 hours",
     reportTime: "Same Day",
-    isPopular: true
+    isPopular: true,
+    availableAt: [101, 103]
   },
   {
     id: 3,
@@ -41,7 +42,8 @@ const mockTests = [
     sampleType: "Blood",
     fasting: "Not required",
     reportTime: "Next Day",
-    isPopular: false
+    isPopular: false,
+    availableAt: [101, 102]
   },
   {
     id: 4,
@@ -53,7 +55,8 @@ const mockTests = [
     sampleType: "Blood",
     fasting: "Not required",
     reportTime: "Next Day",
-    isPopular: false
+    isPopular: false,
+    availableAt: [102, 103]
   },
   {
     id: 5,
@@ -65,7 +68,8 @@ const mockTests = [
     sampleType: "Blood",
     fasting: "Not required",
     reportTime: "Same Day",
-    isPopular: true
+    isPopular: true,
+    availableAt: [101, 102, 103]
   },
   {
     id: 6,
@@ -77,7 +81,8 @@ const mockTests = [
     sampleType: "Blood",
     fasting: "8 hours",
     reportTime: "Same Day",
-    isPopular: false
+    isPopular: false,
+    availableAt: [101, 103]
   },
   {
     id: 7,
@@ -89,7 +94,8 @@ const mockTests = [
     sampleType: "Blood",
     fasting: "8 hours",
     reportTime: "Same Day",
-    isPopular: false
+    isPopular: false,
+    availableAt: [102, 103]
   },
   {
     id: 8,
@@ -101,11 +107,12 @@ const mockTests = [
     sampleType: "Nasal & Throat Swab",
     fasting: "Not required",
     reportTime: "24-48 hours",
-    isPopular: true
+    isPopular: true,
+    availableAt: [101, 102, 103]
   }
 ];
 
-// Mock labs for selection with complete details
+// Mock labs data
 const mockLabs = [
   {
     id: 101,
@@ -138,57 +145,157 @@ const mockLabs = [
 
 const Tests = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Tests');
   const [sortBy, setSortBy] = useState('popular');
-  const [filteredTests, setFilteredTests] = useState(mockTests);
+  const [filteredTests, setFilteredTests] = useState<any[]>([]);
+  const [selectedLab, setSelectedLab] = useState<any>(null);
+  const [showLabSelector, setShowLabSelector] = useState(false);
 
   const categories = ['All Tests', 'Blood Tests', 'Hormone Tests', 'Vitamin Tests', 'Diabetes Tests', 'Organ Function Tests', 'Infection Tests'];
 
+  useEffect(() => {
+    // Check if lab is selected from navigation state
+    if (location.state?.selectedLab) {
+      setSelectedLab(location.state.selectedLab);
+      filterTestsByLab(location.state.selectedLab.id);
+    } else {
+      // No lab selected, show lab selector
+      setShowLabSelector(true);
+    }
+  }, [location.state]);
+
+  const filterTestsByLab = (labId: number) => {
+    const availableTests = mockTests.filter(test => test.availableAt.includes(labId));
+    setFilteredTests(availableTests);
+  };
+
+  const handleLabSelection = (lab: any) => {
+    setSelectedLab(lab);
+    setShowLabSelector(false);
+    filterTestsByLab(lab.id);
+  };
+
   const handleSearch = () => {
-    const filtered = mockTests.filter(test => 
-      test.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      test.description.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!selectedLab) return;
+    
+    let filtered = mockTests.filter(test => 
+      test.availableAt.includes(selectedLab.id) &&
+      (test.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+       test.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
+    
+    if (selectedCategory !== 'All Tests') {
+      filtered = filtered.filter(test => test.category === selectedCategory);
+    }
+    
     setFilteredTests(filtered);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    if (category === 'All Tests') {
-      setFilteredTests(mockTests);
-    } else {
-      const filtered = mockTests.filter(test => test.category === category);
-      setFilteredTests(filtered);
+    if (!selectedLab) return;
+    
+    let filtered = mockTests.filter(test => test.availableAt.includes(selectedLab.id));
+    
+    if (category !== 'All Tests') {
+      filtered = filtered.filter(test => test.category === category);
     }
+    setFilteredTests(filtered);
   };
 
-  // Navigate to booking with detailed lab information
   const handleBookNow = (test: any) => {
-    const defaultLab = mockLabs[0];
+    if (!selectedLab) {
+      setShowLabSelector(true);
+      return;
+    }
+    
     navigate('/booking', { 
       state: { 
         testId: test.id,
         testName: test.name,
-        labId: defaultLab.id,
-        labName: defaultLab.name,
-        labDetails: {
-          address: defaultLab.address,
-          phone: defaultLab.phone,
-          rating: defaultLab.rating,
-          timings: defaultLab.timings,
-          description: defaultLab.description
-        }
+        labId: selectedLab.id,
+        labName: selectedLab.name,
+        labAddress: selectedLab.address,
+        labPhone: selectedLab.phone,
+        labRating: selectedLab.rating,
+        labTimings: selectedLab.timings,
+        labDescription: selectedLab.description
       } 
     });
   };
 
+  const handleSelectDifferentLab = () => {
+    setShowLabSelector(true);
+  };
+
+  if (showLabSelector) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-4">Select a Lab First</h1>
+          <p className="text-lg text-gray-600 mb-6">
+            Please select a lab to view available tests at that location.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {mockLabs.map((lab) => (
+            <div 
+              key={lab.id} 
+              className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleLabSelection(lab)}
+            >
+              <h3 className="text-xl font-semibold mb-2">{lab.name}</h3>
+              <p className="text-gray-600 text-sm mb-2">{lab.address}</p>
+              <p className="text-gray-600 text-sm mb-2">Phone: {lab.phone}</p>
+              <p className="text-gray-600 text-sm mb-2">Rating: {lab.rating} ⭐</p>
+              <p className="text-gray-600 text-sm mb-4">Hours: {lab.timings}</p>
+              <Button className="w-full bg-patho-primary hover:bg-patho-secondary">
+                Select This Lab
+              </Button>
+            </div>
+          ))}
+        </div>
+        
+        <div className="text-center mt-8">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/labs')}
+          >
+            Browse All Labs
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {selectedLab && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900">Selected Lab: {selectedLab.name}</h2>
+              <p className="text-blue-700 text-sm">{selectedLab.address}</p>
+              <p className="text-blue-700 text-sm">Rating: {selectedLab.rating} ⭐ | {selectedLab.timings}</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleSelectDifferentLab}
+            >
+              Change Lab
+            </Button>
+          </div>
+        </div>
+      )}
+      
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Diagnostic Tests</h1>
+        <h1 className="text-3xl font-bold mb-4">Available Tests</h1>
         <p className="text-lg text-gray-600 mb-6">
-          Browse and book from a wide range of diagnostic tests available at top-rated labs across India. Compare prices, read about test details, and find the right tests for your health needs.
+          Browse tests available at {selectedLab?.name}. Compare prices and book the right tests for your health needs.
         </p>
         
         <div className="flex flex-col md:flex-row gap-4">
@@ -301,6 +408,18 @@ const Tests = () => {
           </div>
         ))}
       </div>
+      
+      {filteredTests.length === 0 && selectedLab && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No tests available at {selectedLab.name} for your search criteria.</p>
+          <Button 
+            className="mt-4"
+            onClick={handleSelectDifferentLab}
+          >
+            Select Different Lab
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

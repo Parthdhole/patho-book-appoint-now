@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -25,25 +26,19 @@ const BookingForm = () => {
   const navigate = useNavigate();
   const { createBooking, isLoading } = useBooking();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [sampleType, setSampleType] = useState<'home' | 'lab'>(
-    (location.state?.sampleType as 'home' | 'lab') || 'home'
-  );
-
-  // NEW: Payment method state
+  const [sampleType, setSampleType] = useState<'home' | 'lab'>('home');
   const [paymentMethod, setPaymentMethod] = useState<string>('pay_at_lab');
 
-  // NEW: Get selected lab info (from navigation state)
-  const selectedLab = location.state?.labId
-    ? {
-        labId: location.state.labId,
-        labName: location.state.labName,
-        labAddress: location.state.labAddress,
-        labPhone: location.state.labPhone,
-        labRating: location.state.labRating,
-        labDescription: location.state.labDescription,
-        labTimings: location.state.labTimings,
-      }
-    : null;
+  // Get selected lab and test info from navigation state
+  const selectedLab = location.state ? {
+    labId: location.state.labId,
+    labName: location.state.labName,
+    labAddress: location.state.labAddress,
+    labPhone: location.state.labPhone,
+    labRating: location.state.labRating,
+    labDescription: location.state.labDescription,
+    labTimings: location.state.labTimings,
+  } : null;
 
   const [testId, setTestId] = useState<number | null>(
     location.state?.testId || null
@@ -73,22 +68,34 @@ const BookingForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !testId) {
+    if (!selectedDate || !testId || !selectedLab) {
+      console.error('Missing required data:', { selectedDate, testId, selectedLab });
       return;
     }
     
     const selectedTest = mockTests.find(test => test.id === testId);
     
     if (!selectedTest) {
+      console.error('Test not found:', testId);
       return;
     }
+    
+    console.log('Creating booking with data:', {
+      testId,
+      testName: selectedTest.name,
+      labId: selectedLab.labId,
+      labName: selectedLab.labName,
+      selectedDate,
+      formData,
+      sampleType,
+      paymentMethod
+    });
     
     const bookingData: BookingFormData = {
       testId,
       testName: selectedTest.name,
-      // NEW: Include selected lab data if present
-      labId: selectedLab?.labId,
-      labName: selectedLab?.labName,
+      labId: selectedLab.labId,
+      labName: selectedLab.labName,
       appointmentDate: selectedDate,
       appointmentTime: formData.appointmentTime,
       patientName: formData.patientName,
@@ -103,51 +110,80 @@ const BookingForm = () => {
       createdAt: new Date()
     };
     
+    console.log('Final booking data:', bookingData);
+    
     const result = await createBooking(bookingData);
     
     if (result) {
-      // Pass payment info for confirmation/receipt if needed
-      navigate('/booking-confirmation', { state: { bookingId: result.id, paymentMethod } });
+      navigate('/booking-confirmation', { 
+        state: { 
+          bookingId: result.id, 
+          paymentMethod,
+          bookingData: {
+            ...bookingData,
+            labDetails: selectedLab
+          }
+        } 
+      });
     }
   };
   
   useEffect(() => {
-    if (!testId) {
+    if (!testId || !selectedLab) {
+      console.log('Missing test or lab data, redirecting to tests');
       navigate('/tests');
     }
-  }, [testId, navigate]);
+  }, [testId, selectedLab, navigate]);
   
   const selectedTest = testId ? mockTests.find(test => test.id === testId) : null;
   
-  if (!selectedTest) {
+  if (!selectedTest || !selectedLab) {
     return <div className="p-8 text-center">Loading...</div>;
   }
   
   return (
     <div className="max-w-4xl mx-auto p-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Book Appointment</h1>
-      <div className="mb-4">
-        {selectedLab && (
-          <Card className="mb-5 border-blue-300 bg-blue-50">
-            <CardHeader>
-              <CardTitle>Selected Lab</CardTitle>
-              <CardDescription>{selectedLab.labName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div><strong>Address:</strong> {selectedLab.labAddress} </div>
-                <div><strong>Phone:</strong> {selectedLab.labPhone}</div>
-                <div><strong>Rating:</strong> {selectedLab.labRating ?? "-"} ⭐</div>
-                <div><strong>Hours:</strong> {selectedLab.labTimings}</div>
-                <div className="text-blue-900">{selectedLab.labDescription}</div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      
+      {/* Selected Lab Information */}
+      <Card className="mb-6 border-blue-300 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Selected Lab
+          </CardTitle>
+          <CardDescription>{selectedLab.labName}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <strong>Address:</strong>
+              <p className="text-gray-700">{selectedLab.labAddress}</p>
+            </div>
+            <div>
+              <strong>Phone:</strong>
+              <p className="text-gray-700">{selectedLab.labPhone}</p>
+            </div>
+            <div>
+              <strong>Rating:</strong>
+              <p className="text-gray-700">{selectedLab.labRating} ⭐</p>
+            </div>
+            <div>
+              <strong>Hours:</strong>
+              <p className="text-gray-700">{selectedLab.labTimings}</p>
+            </div>
+            <div className="md:col-span-2">
+              <strong>About:</strong>
+              <p className="text-blue-900">{selectedLab.labDescription}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <form onSubmit={handleSubmit}>
+            {/* Test Details Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Test Details</CardTitle>
@@ -170,6 +206,7 @@ const BookingForm = () => {
               </CardContent>
             </Card>
             
+            {/* Sample Collection Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Sample Collection</CardTitle>
@@ -197,8 +234,8 @@ const BookingForm = () => {
                     <Label htmlFor="lab" className="flex items-center cursor-pointer">
                       <Building2 className="mr-2 h-5 w-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">Visit a Lab</p>
-                        <p className="text-sm text-gray-500">Go to the nearest lab for sample collection</p>
+                        <p className="font-medium">Visit the Lab</p>
+                        <p className="text-sm text-gray-500">Go to {selectedLab.labName} for sample collection</p>
                       </div>
                     </Label>
                   </div>
@@ -221,6 +258,7 @@ const BookingForm = () => {
               </CardContent>
             </Card>
             
+            {/* Appointment Details Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Appointment Details</CardTitle>
@@ -277,6 +315,7 @@ const BookingForm = () => {
               </CardContent>
             </Card>
             
+            {/* Payment Method Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Payment Method</CardTitle>
@@ -316,6 +355,7 @@ const BookingForm = () => {
               </CardContent>
             </Card>
             
+            {/* Patient Information Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Patient Information</CardTitle>
@@ -404,6 +444,7 @@ const BookingForm = () => {
           </form>
         </div>
         
+        {/* Order Summary Sidebar */}
         <div>
           <Card className="sticky top-6">
             <CardHeader>
