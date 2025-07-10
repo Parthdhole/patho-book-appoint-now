@@ -56,27 +56,29 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
-      // Insert booking with correct structure - single object, not array
+      // Insert booking with correct database column names
+      const insertData = {
+        user_id: userId,
+        test_id: bookingData.testId.toString(),
+        test_name: bookingData.testName,
+        lab_id: bookingData.labId?.toString() || null,
+        lab_name: bookingData.labName || null,
+        appointment_date: appointmentDate,
+        appointment_time: bookingData.appointmentTime,
+        patient_name: bookingData.patientName,
+        patient_age: bookingData.patientAge,
+        patient_gender: bookingData.patientGender,
+        patient_phone: bookingData.patientPhone,
+        patient_email: bookingData.patientEmail,
+        sample_type: bookingData.sampleType,
+        address: bookingData.address || null,
+        status: bookingData.status,
+        payment_status: bookingData.paymentStatus,
+      };
+
       const { data, error } = await supabase
         .from('bookings')
-        .insert({
-          user_id: userId,
-          test_id: bookingData.testId.toString(),
-          test_name: bookingData.testName,
-          lab_id: bookingData.labId?.toString() ?? null,
-          lab_name: bookingData.labName ?? null,
-          appointment_date: appointmentDate,
-          appointment_time: bookingData.appointmentTime,
-          patient_name: bookingData.patientName,
-          patient_age: bookingData.patientAge,
-          patient_gender: bookingData.patientGender,
-          patient_phone: bookingData.patientPhone,
-          patient_email: bookingData.patientEmail,
-          sample_type: bookingData.sampleType,
-          address: bookingData.address ?? null,
-          status: bookingData.status,
-          payment_status: bookingData.paymentStatus,
-        })
+        .insert(insertData)
         .select()
         .single();
 
