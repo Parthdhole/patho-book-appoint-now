@@ -167,14 +167,16 @@ const Auth = () => {
             .from("user_roles")
             .select("role")
             .eq("user_id", user_id)
-            .eq("role", "admin");
+            .eq("role", "admin")
+            .maybeSingle();
 
           if (rolesError) {
             console.error("Direct query also failed:", rolesError);
-            throw new Error("Failed to check user roles");
+            // Final fallback - check hardcoded admin
+            isAdmin = adminEmail === 'admin22@gmail.com';
+          } else {
+            isAdmin = !!roles;
           }
-
-          isAdmin = roles && roles.length > 0;
         } else {
           isAdmin = !!rpcResult;
         }

@@ -30,7 +30,7 @@ export function useAdminRole() {
 
         console.log("Checking admin role for user:", user_id);
 
-        // Use RPC call to bypass RLS recursion issues
+        // Use RPC call to check user role
         const { data, error } = await supabase.rpc('check_user_role', {
           user_id: user_id,
           role_name: 'admin'
@@ -50,8 +50,10 @@ export function useAdminRole() {
 
           if (roleError) {
             console.error("Fallback role check failed:", roleError);
+            // Final fallback - check hardcoded admin
+            const isHardcodedAdmin = session.session?.user?.email === 'admin22@gmail.com';
             if (isMounted) {
-              setIsAdmin(false);
+              setIsAdmin(isHardcodedAdmin);
             }
           } else {
             if (isMounted) {
@@ -66,7 +68,10 @@ export function useAdminRole() {
       } catch (error) {
         console.error("Admin role check error:", error);
         if (isMounted) {
-          setIsAdmin(false);
+          // Final fallback for any unexpected errors
+          const { data: session } = await supabase.auth.getSession();
+          const isHardcodedAdmin = session.session?.user?.email === 'admin22@gmail.com';
+          setIsAdmin(isHardcodedAdmin);
         }
       } finally {
         if (isMounted) {
