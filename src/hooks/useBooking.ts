@@ -37,6 +37,8 @@ export const useBooking = () => {
     setIsLoading(true);
 
     try {
+      console.log("Creating booking with data:", bookingData);
+      
       const { data: session } = await supabase.auth.getSession();
 
       if (!session.session?.user) {
@@ -56,13 +58,29 @@ export const useBooking = () => {
         ? bookingData.appointmentDate.toISOString()
         : bookingData.appointmentDate;
 
+      // Fetch lab details if labId is provided
+      let labDetails = null;
+      if (bookingData.labId) {
+        const { data: lab, error: labError } = await supabase
+          .from('labs')
+          .select('*')
+          .eq('id', bookingData.labId.toString())
+          .maybeSingle();
+
+        if (labError) {
+          console.error("Error fetching lab details:", labError);
+        } else {
+          labDetails = lab;
+        }
+      }
+
       // Insert booking with correct database column names
       const insertData = {
         user_id: userId,
         test_id: bookingData.testId.toString(),
         test_name: bookingData.testName,
         lab_id: bookingData.labId?.toString() || null,
-        lab_name: bookingData.labName || null,
+        lab_name: labDetails?.name || bookingData.labName || null,
         appointment_date: appointmentDate,
         appointment_time: bookingData.appointmentTime,
         patient_name: bookingData.patientName,
@@ -76,6 +94,8 @@ export const useBooking = () => {
         payment_status: bookingData.paymentStatus,
       };
 
+      console.log("Insert data:", insertData);
+
       const { data, error } = await supabase
         .from('bookings')
         .insert(insertData)
@@ -83,6 +103,8 @@ export const useBooking = () => {
         .single();
 
       if (error) {
+        console.error("Database insert error:", error);
+        
         // Check if it's a unique constraint violation
         if (error.code === '23505' && error.message.includes('unique_user_appointment')) {
           toast({
@@ -95,21 +117,35 @@ export const useBooking = () => {
         throw error;
       }
 
+      console.log("Booking created successfully:", data);
+
       // Send confirmation email
       try {
-        await supabase.functions.invoke('send-booking-confirmation', {
-          body: {
-            bookingId: data.id,
-            patientName: bookingData.patientName,
-            patientEmail: bookingData.patientEmail,
-            testName: bookingData.testName,
-            appointmentDate: appointmentDate,
-            appointmentTime: bookingData.appointmentTime,
-            labName: bookingData.labName,
-            sampleType: bookingData.sampleType,
-            address: bookingData.address
-          }
+        console.log("Sending confirmation email...");
+        const emailData = {
+          bookingId: data.id,
+          patientName: bookingData.patientName,
+          patientEmail: bookingData.patientEmail,
+          testName: bookingData.testName,
+          appointmentDate: appointmentDate,
+          appointmentTime: bookingData.appointmentTime,
+          labName: labDetails?.name || bookingData.labName,
+          sampleType: bookingData.sampleType,
+          address: bookingData.address
+        };
+
+        console.log("Email data:", emailData);
+
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-booking-confirmation', {
+          body: emailData
         });
+
+        console.log("Email result:", { emailResult, emailError });
+
+        if (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+          // Don't fail the booking if email fails
+        }
       } catch (emailError) {
         console.error('Error sending confirmation email:', emailError);
         // Don't fail the booking if email fails
@@ -120,7 +156,7 @@ export const useBooking = () => {
         description: "Your appointment has been booked successfully. A confirmation email has been sent.",
       });
 
-      return data ? data : null;
+      return data;
     } catch (error) {
       console.error('Error creating booking:', error);
       toast({

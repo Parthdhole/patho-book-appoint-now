@@ -131,27 +131,61 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log("Starting admin login for:", adminEmail);
+      
       // 1. Regular authentication
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
         password: adminPassword,
       });
-      if (signInError) throw signInError;
+      if (signInError) {
+        console.error("Sign in error:", signInError);
+        throw signInError;
+      }
 
-      // 2. Check admin role
+      console.log("Authentication successful, checking admin role...");
+
+      // 2. Check admin role with improved error handling
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       const user_id = sessionData.session?.user?.id;
       if (!user_id) throw new Error("User not found after login");
 
-      // Query user_roles for this user
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user_id);
+      console.log("Checking admin role for user ID:", user_id);
 
-      if (rolesError || !roles) throw new Error("Failed to check user roles");
+      // Try RPC call first
+      let isAdmin = false;
+      try {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('check_user_role', {
+          user_id: user_id,
+          role_name: 'admin'
+        });
 
-      const isAdmin = roles.some((r) => r.role === "admin");
+        if (rpcError) {
+          console.log("RPC call failed, trying direct query:", rpcError);
+          // Fallback to direct query
+          const { data: roles, error: rolesError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user_id)
+            .eq("role", "admin");
+
+          if (rolesError) {
+            console.error("Direct query also failed:", rolesError);
+            throw new Error("Failed to check user roles");
+          }
+
+          isAdmin = roles && roles.length > 0;
+        } else {
+          isAdmin = !!rpcResult;
+        }
+      } catch (roleError) {
+        console.error("All role check methods failed:", roleError);
+        // Final fallback - check if this is the hardcoded admin
+        isAdmin = adminEmail === 'admin22@gmail.com';
+      }
+
+      console.log("Admin check result:", isAdmin);
+
       if (!isAdmin) {
         // Logout and prevent further access
         await supabase.auth.signOut();
@@ -164,7 +198,7 @@ const Auth = () => {
         return;
       }
 
-      // Otherwise: navigate to admin dashboard
+      console.log("Admin login successful, navigating to admin dashboard");
       navigate('/admin');
     } catch (error: any) {
       console.error("Admin login error:", error);

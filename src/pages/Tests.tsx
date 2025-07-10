@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Filter, Clock, Droplet, CalendarClock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -104,34 +105,34 @@ const mockTests = [
   }
 ];
 
-// Mock labs for selection
+// Mock labs for selection with complete details
 const mockLabs = [
   {
     id: 101,
     name: "City Lab Diagnostics",
-    address: "123 Main Street, Mumbai",
-    phone: "9000000001",
+    address: "123 Main Street, Mumbai, Maharashtra 400001",
+    phone: "+91-9000000001",
     rating: 4.5,
-    timings: "Mon-Sat: 8am-8pm",
-    description: "NABL Accredited Lab with 20+ years experience.",
+    timings: "Mon-Sat: 8am-8pm, Sun: 8am-2pm",
+    description: "NABL Accredited Lab with 20+ years experience in diagnostic testing.",
   },
   {
     id: 102,
     name: "Health First Labs",
-    address: "456 Park Avenue, Pune",
-    phone: "9000000002",
+    address: "456 Park Avenue, Pune, Maharashtra 411001",
+    phone: "+91-9000000002",
     rating: 4.1,
     timings: "Mon-Sun: 7am-7pm",
-    description: "Modern diagnostic facilities.",
+    description: "Modern diagnostic facilities with state-of-the-art equipment.",
   },
   {
     id: 103,
     name: "Apollo Diagnostic Centre",
-    address: "789 High Road, Delhi",
-    phone: "9000000003",
+    address: "789 High Road, Delhi, NCR 110001",
+    phone: "+91-9000000003",
     rating: 4.8,
-    timings: "Mon-Fri: 8am-8pm, Sat: 8am-4pm",
-    description: "Trusted for accuracy & reliability.",
+    timings: "Mon-Fri: 8am-8pm, Sat: 8am-4pm, Sun: Closed",
+    description: "Trusted for accuracy & reliability with nationwide presence.",
   },
 ];
 
@@ -141,10 +142,6 @@ const Tests = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Tests');
   const [sortBy, setSortBy] = useState('popular');
   const [filteredTests, setFilteredTests] = useState(mockTests);
-
-  // For Select Lab dialog
-  const [labSelectOpen, setLabSelectOpen] = useState(false);
-  const [selectedTestForLab, setSelectedTestForLab] = useState(null);
 
   const categories = ['All Tests', 'Blood Tests', 'Hormone Tests', 'Vitamin Tests', 'Diabetes Tests', 'Organ Function Tests', 'Infection Tests'];
 
@@ -166,11 +163,24 @@ const Tests = () => {
     }
   };
 
-  // On "Book Now", immediately navigate to the booking form for first (default) lab
+  // Navigate to booking with detailed lab information
   const handleBookNow = (test: any) => {
-    // Pick the first lab by default for simplicity—user can edit lab choice in the booking flow if needed
     const defaultLab = mockLabs[0];
-    navigate('/booking', { state: { testId: test.id, labId: defaultLab.id } });
+    navigate('/booking', { 
+      state: { 
+        testId: test.id,
+        testName: test.name,
+        labId: defaultLab.id,
+        labName: defaultLab.name,
+        labDetails: {
+          address: defaultLab.address,
+          phone: defaultLab.phone,
+          rating: defaultLab.rating,
+          timings: defaultLab.timings,
+          description: defaultLab.description
+        }
+      } 
+    });
   };
 
   return (

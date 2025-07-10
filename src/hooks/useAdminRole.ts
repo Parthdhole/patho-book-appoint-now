@@ -14,25 +14,65 @@ export function useAdminRole() {
     let isMounted = true;
 
     async function checkRole() {
-      setLoading(true);
-      const { data: session } = await supabase.auth.getSession();
-      const user_id = session.session?.user?.id;
-      if (!user_id) {
-        isMounted && setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user_id);
+      try {
+        setLoading(true);
+        const { data: session } = await supabase.auth.getSession();
+        const user_id = session.session?.user?.id;
+        
+        if (!user_id) {
+          console.log("No user found in session");
+          if (isMounted) {
+            setIsAdmin(false);
+            setLoading(false);
+          }
+          return;
+        }
 
-      if (!error && data && data.some((r) => r.role === "admin")) {
-        isMounted && setIsAdmin(true);
-      } else {
-        isMounted && setIsAdmin(false);
+        console.log("Checking admin role for user:", user_id);
+
+        // Use RPC call to bypass RLS recursion issues
+        const { data, error } = await supabase.rpc('check_user_role', {
+          user_id: user_id,
+          role_name: 'admin'
+        });
+
+        console.log("Role check result:", { data, error });
+
+        if (error) {
+          console.error("Error checking user role:", error);
+          // Fallback to direct query if RPC fails
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user_id)
+            .eq("role", "admin")
+            .maybeSingle();
+
+          if (roleError) {
+            console.error("Fallback role check failed:", roleError);
+            if (isMounted) {
+              setIsAdmin(false);
+            }
+          } else {
+            if (isMounted) {
+              setIsAdmin(!!roleData);
+            }
+          }
+        } else {
+          if (isMounted) {
+            setIsAdmin(!!data);
+          }
+        }
+      } catch (error) {
+        console.error("Admin role check error:", error);
+        if (isMounted) {
+          setIsAdmin(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
 
     checkRole();
